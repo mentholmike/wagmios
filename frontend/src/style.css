@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+:root {
+  --primary: #4f46e5;
+  --secondary: #6366f1;
+}
+
+body {
+  @apply bg-gray-50 dark:bg-gray-900;
+  @apply text-gray-900 dark:text-gray-100;
+}
