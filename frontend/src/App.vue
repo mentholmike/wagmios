@@ -315,7 +315,7 @@
               Created by @ITZMIZZLE
             </a>
             <a 
-              href="https://home.wagmilabs.fun" 
+              href="https://wagmilabs.fun" 
               target="_blank" 
               class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
             >
