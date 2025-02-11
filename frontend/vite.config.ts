@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
+import { resolve } from 'path'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
 
@@ -16,7 +16,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(__dirname, './src'),
+      'three': resolve(__dirname, 'node_modules/three')
     },
   },
   server: {
@@ -30,4 +31,12 @@ export default defineConfig({
       }
     }
   },
+  optimizeDeps: {
+    include: ['three']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/three/, /node_modules/]
+    }
+  }
 }) 

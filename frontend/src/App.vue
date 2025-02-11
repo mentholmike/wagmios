@@ -362,7 +362,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import Background3D from './components/Background3D.vue'
-import { useRouter } from 'vue-router'
 
 // System metrics
 const systemMetrics = ref({
@@ -527,16 +526,6 @@ const formatBytes = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
 
-const formatUptime = (seconds: number): string => {
-  const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  
-  if (days > 0) return `${days}d ${hours}h`
-  if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes}m`
-}
-
 // Fetch metrics
 const fetchMetrics = async () => {
   try {
@@ -661,11 +650,6 @@ const deleteDefaultLink = (linkName: 'telegram' | 'twitter' | 'docker') => {
 const deleteCustomLink = (index: number) => {
   customLinks.value.splice(index, 1)
   localStorage.setItem('customLinks', JSON.stringify(customLinks.value))
-}
-
-// Add v-show condition for default links
-const showDefaultLink = (linkName: 'telegram' | 'twitter' | 'docker') => {
-  return defaultLinks.value[linkName]
 }
 
 // Add password protection state

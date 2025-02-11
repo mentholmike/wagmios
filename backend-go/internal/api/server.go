@@ -34,9 +34,6 @@ func (s *Server) Router() http.Handler {
 
 func (s *Server) routes() {
 	s.router.HandleFunc("/api/system/metrics", s.handleGetSystemMetrics).Methods("GET")
-	s.router.HandleFunc("/api/settings/password", s.handleSetPassword).Methods("POST", "DELETE")
-	s.router.HandleFunc("/api/auth/verify", s.handleVerifyPassword).Methods("POST")
-	s.router.HandleFunc("/api/auth/check", s.handleCheckPasswordSet).Methods("GET")
 }
 
 func (s *Server) handleGetSystemMetrics(w http.ResponseWriter, r *http.Request) {
