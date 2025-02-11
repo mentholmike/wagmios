@@ -1,4 +1,5 @@
-# 🚀 Project Name
+# 💾WagmiOS
+
 
 ## 📌 Table of Contents
 - [Introduction](#introduction)
@@ -14,29 +15,20 @@
 ---
 
 ## 📖 Introduction
-Welcome to **Project Name**! 🎉  
-A brief introduction goes here. Explain what your project does and why it's useful.
-
-> _"A catchy tagline or a short quote about the project."_  
+Welcome to **WagmiOS*! 🎉  
+WagmiOS is a self hosted dashboard that will help control your agent as well as intergrate with features. This dashboard will help you manage your agent more effiecntly along with entertainment options
 
 ---
 
 ## ✨ Features
-✅ Feature 1 - Short description  
-✅ Feature 2 - Short description  
-✅ Feature 3 - Short description  
+✅ Feature 1 - Full Selfhosted frontend that ties into you overall hardware and Agent 
+✅ Feature 2 -  Asks as a self hosted homepage. Bookmark all of your favorite sites
+✅ Soon  - A full pleged docker marketplace. self host to your hears content <3  
 
 ---
 
 ## ⚡ Installation
-### **Prerequisites**
-Before installing, make sure you have:
-- [Node.js](https://nodejs.org/) vXX.XX
-- Python 3.X (if applicable)
-- Any required dependencies
+1 command: `git clone https://github.com/mentholmike/wagmios.git && cd wagmios && ./install.sh`
 
 ### **Setup**
-Clone the repository:
-```bash
-git clone https://github.com/user/repo.git
-cd repo
+install this script and then headover to localhost:5174 or yourip:5174
