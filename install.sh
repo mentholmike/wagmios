@@ -3,21 +3,13 @@
 # Exit on error
 set -e
 
-# Detect OS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    OS_TYPE="macos"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Detect Linux distribution
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        OS_TYPE="linux"
-        DISTRO=$ID
-    else
-        echo "Unsupported Linux distribution"
-        exit 1
-    fi
+# Detect Linux distribution
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS_TYPE="linux"
+    DISTRO=$ID
 else
-    echo "Unsupported operating system: $OSTYPE"
+    echo "Unsupported Linux distribution"
     exit 1
 fi
 
@@ -31,113 +23,73 @@ echo "
 ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░ 
 ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░ 
  ░▒▓█████████████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓██████▓▒░░▒▓███████▓▒░  
-                                                                                                    
-                                                                                                    
-
 "
+
 ##################################################################################################
 echo "Starting WagmiOS Installation..."
 echo "Detected OS: $OS_TYPE"
-if [ "$OS_TYPE" = "linux" ]; then
-    echo "Linux Distribution: $DISTRO"
-fi
+echo "Linux Distribution: $DISTRO"
 sleep 2
 
-# Install system dependencies based on OS
+# Install system dependencies based on Linux distribution
 echo "Installing system dependencies..."
-if [ "$OS_TYPE" = "macos" ]; then
-    # Check if Homebrew is installed
-    if ! command -v brew &> /dev/null; then
-        echo "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    
-    # Install macOS dependencies
-    brew install \
+if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
+    sudo apt-get update
+    sudo apt-get install -y \
+        build-essential \
         curl \
         git \
         wget \
+        ca-certificates \
         gnupg \
         dos2unix \
         python3 \
-        go \
-        node@20 \
-        sass \
+        python3-pip \
         postgresql \
-        redis
+        redis \
+        golang-go \
+        nodejs
 
-elif [ "$OS_TYPE" = "linux" ]; then
-    if [ "$DISTRO" = "ubuntu" ] || [ "$DISTRO" = "debian" ]; then
-        # Clean up any existing MongoDB repository files
-        sudo rm -f /etc/apt/sources.list.d/mongodb-org-7.0.list
-        sudo rm -f /usr/share/keyrings/mongodb-server-7.0.gpg
+elif [ "$DISTRO" = "fedora" ]; then
+    sudo dnf update -y
+    sudo dnf install -y \
+        @development-tools \
+        curl \
+        git \
+        wget \
+        ca-certificates \
+        gnupg \
+        dos2unix \
+        python3 \
+        python3-pip \
+        nodejs \
+        npm \
+        postgresql \
+        redis \
+        golang-go
 
-        # Setup NodeSource repository for Node.js 20.x
-        curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-        source ~/.bashrc  # or source ~/.zshrc
-
-
-        sudo apt-get update
-        sudo apt-get install -y \
-            build-essential \
-            curl \
-            git \
-            wget \
-            ca-certificates \
-            gnupg \
-            dos2unix \
-            python3 \
-            python3-pip \
-            ruby-sass \
-            postgresql \
-            redis \
-            golang-go \
-            nodejs  # This will install both Node.js and npm from NodeSource
-    elif [ "$DISTRO" = "fedora" ]; then
-        sudo dnf update -y
-        sudo dnf install -y \
-            @development-tools \
-            curl \
-            git \
-            wget \
-            ca-certificates \
-            gnupg \
-            dos2unix \
-            python3 \
-            python3-pip \
-            nodejs \
-            npm \
-            sass \
-            postgresql \
-            redis \
-            golang-go
-    elif [ "$DISTRO" = "arch" ]; then
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            base-devel \
-            curl \
-            git \
-            wget \
-            ca-certificates \
-            gnupg \
-            dos2unix \
-            python3 \
-            python3-pip \
-            nodejs \
-            npm \
-            sass \
-            postgresql \
-            redis \
-            golang-go
-    fi
+elif [ "$DISTRO" = "arch" ]; then
+    sudo pacman -Syu --noconfirm
+    sudo pacman -S --noconfirm \
+        base-devel \
+        curl \
+        git \
+        wget \
+        ca-certificates \
+        gnupg \
+        dos2unix \
+        python3 \
+        python3-pip \
+        nodejs \
+        npm \
+        postgresql \
+        redis \
+        golang-go
 fi
+  
 
 # Set the base directory
 WAGMI_DIR="$HOME/wagmios"
-
-# Make the start and stop services scripts executable
-chmod +x start-services.sh stop-services.sh
-
 ##################################################################################################
 # Install and setup NVM with version locking
 function install_and_setup_nvm() {
@@ -147,11 +99,12 @@ function install_and_setup_nvm() {
     if [ ! -d "$NVM_DIR" ]; then
         # Install NVM
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-        
-        # Source NVM immediately
+
+        # Add NVM to current shell environment
+        export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-        
+
         # Verify installation
         command -v nvm || {
             echo "NVM installation failed"
@@ -159,24 +112,39 @@ function install_and_setup_nvm() {
         }
     else
         # NVM already installed, just source it
+        export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
     fi
 
+    # Ensure NVM is loaded by checking if the command exists
+    if ! command -v nvm &> /dev/null; then
+        echo "❌ NVM not properly loaded. Adding to shell configuration..."
+        echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc"
+        echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> "$HOME/.bashrc"
+        echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> "$HOME/.bashrc"
+        source "$HOME/.bashrc"
+    fi
 
+    # Install and use Node.js
     nvm install 18.17.1
-
-    # Set default Node version for WagmiOS
     nvm alias default 18.17.1
     nvm use 18.17.1
     
+    # Verify Node.js installation
+    if ! command -v node &> /dev/null; then
+        echo "❌ Node.js installation failed"
+        exit 1
+    fi
+    
     echo "✅ NVM $(nvm --version) installed and configured"
+    echo "✅ Node.js $(node --version) installed and configured"
 }
 ##################################################################################################
 # Call this function once at the start
 install_and_setup_nvm
 
-# Install pnpm
+ #Install pnpm
 echo "Installing pnpm..."
 curl -fsSL https://get.pnpm.io/install.sh | sh -
 export PNPM_HOME="$HOME/.local/share/pnpm"
@@ -199,7 +167,6 @@ pnpm install -g \
 echo "Starting installation process..."
 
 ##################################################################################################
-# Install nvm first
 #install_and_setup_nvm
 
 # Setup WagmiOS frontend with Node.js 18 FIRST
@@ -231,48 +198,33 @@ if [ -d "$WAGMI_DIR/frontend" ]; then
     NODE_ENV=production pnpm build
 fi
 ##################################################################################################
-#Install Go
+# Install Go
 echo "Installing Go..."
-if [ "$OS_TYPE" = "macos" ]; then
-    brew install go
-elif [ "$OS_TYPE" = "linux" ]; then
-    # Install Go 1.22 or newer
-    GO_VERSION="1.22.0"
-    wget "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
-    rm "go${GO_VERSION}.linux-amd64.tar.gz"
-    
-    # Add Go to PATH
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-    echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
-    source ~/.bashrc
-fi
+GO_VERSION="1.18.10"
+wget "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
+rm "go${GO_VERSION}.linux-amd64.tar.gz"
 
-# Verify Go installation
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc
 go version
-
 
 # Install Go dependencies
 echo "Installing Go dependencies..."
-# Create a temporary directory for managing dependencies
 TEMP_GO_DIR=$(mktemp -d)
 cd "$TEMP_GO_DIR"
-
-# Initialize a temporary module
-go mod init temp
-
-# Add dependencies
+cat > go.mod << EOL
+module temp
+go 1.18
+EOL
 go get github.com/gorilla/mux@latest
 go get github.com/rs/cors@latest
 go get github.com/joho/godotenv@latest
 go get github.com/lib/pq@latest
 go get github.com/go-redis/redis/v8@latest
-
-# Clean up
 cd - > /dev/null
 rm -rf "$TEMP_GO_DIR"
-##################################################################################################
 
 ##################################################################################################
 # Update router configuration
@@ -283,63 +235,57 @@ if [ -f "$WAGMI_DIR/frontend/src/router/index.js" ]; then
     sed -i.bak '/import Settings/d' "$WAGMI_DIR/frontend/src/router/index.js"
     rm -f "$WAGMI_DIR/frontend/src/router/index.js.bak"
 fi 
-##################################################################################################
 
 ##################################################################################################
+# Setup system services
 echo "Setting up system services..."
+PNPM_PATH=$(which pnpm)
+if [ -z "$PNPM_PATH" ]; then
+    echo "❌ Error: pnpm not found in PATH"
+    exit 1
+fi
 
-if [ "$OS_TYPE" = "linux" ]; then
-    # First, get the exact path to pnpm
-    PNPM_PATH=$(which pnpm)
-    if [ -z "$PNPM_PATH" ]; then
-        echo "Error: pnpm not found in PATH"
-        exit 1
-    fi
+echo "Using pnpm from: $PNPM_PATH"
 
-
-    sudo tee /etc/systemd/system/wagmios-backend.service > /dev/null << EOL
+sudo tee /etc/systemd/system/wagmios-backend.service > /dev/null << EOL
 [Unit]
 Description=WagmiOS Backend Service
+After=network.target
+[Service]
+Type=simple
+User=$USER
+Group=$USER
+WorkingDirectory=$HOME/wagmios/backend-go
+ExecStart=/usr/local/go/bin/go run cmd/server/main.go
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+EOL
+
+sudo systemctl daemon-reload
+sudo systemctl enable wagmios-backend
+sudo systemctl restart wagmios-backend
+
+  # Check service status
+    echo "Checking wagmios-backend service status..."
+    sleep 3
+    systemctl status wagmios-backend --no-pager
+
+##################################################################################################
+# Set up frontend service
+sudo tee /etc/systemd/system/wagmios-frontend.service > /dev/null << EOL
+[Unit]
+Description=WagmiOS Frontend Service
 After=network.target
 
 [Service]
 Type=simple
 User=$USER
 Group=$USER
-WorkingDirectory=$HOME/wagmios/backend-go
-Environment="PATH=/usr/local/go/bin:$PATH"
-Environment="GOPATH=$HOME/go"
-ExecStart=/usr/local/go/bin/go run cmd/server/main.go
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-    # Reload systemd and restart service
-    sudo systemctl daemon-reload
-    sudo systemctl enable wagmios-backend
-    sudo systemctl restart wagmios-backend
-
-    # Check service status
-    echo "Checking wagmios-backend service status..."
-    sleep 3
-    systemctl status wagmios-backend --no-pager
-
-    # Starts the wagmios self hosted site
-    sudo tee /etc/systemd/system/wagmios-frontend.service > /dev/null << EOL
-[Unit]
-Description=WagmiOS Frontend Service
-
-
-[Service]
-Type=simple
-User=$USER
-Group=$USER
 WorkingDirectory=$HOME/wagmios/frontend
-Environment="PATH=$HOME/.local/share/pnpm:$PATH"
-ExecStart=$(which pnpm) run dev
+Environment=PATH=$PATH
+ExecStart=$PNPM_PATH run dev
 Restart=always
 RestartSec=10
 
@@ -347,127 +293,33 @@ RestartSec=10
 WantedBy=multi-user.target
 EOL
 
-##################################################################################################
+sudo systemctl daemon-reload
+sudo systemctl enable wagmios-frontend
+sudo systemctl restart wagmios-frontend
 
 ##################################################################################################
-
-
-##################################################################################################
-#MacOS services
-##################################################################################################
-elif [ "$OS_TYPE" = "macos" ]; then
-    # Create LaunchAgents directory if it doesn't exist
-    mkdir -p ~/Library/LaunchAgents
-##################################################################################################
-    
-##################################################################################################
-    # Create WagmiOS Backend service
-    cat > ~/Library/LaunchAgents/com.wagmios.backend.plist << EOL
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.wagmios.backend</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/go/bin/go</string>
-        <string>run</string>
-        <string>cmd/server/main.go</string>
-    </array>
-    <key>WorkingDirectory</key>
-    <string>%h/WagmiOS/wagmios/backend-go</string>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>StandardOutPath</key>
-    <string>/tmp/wagmios-backend.log</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/wagmios-backend.error.log</string>
-    <key>StartInterval</key>
-    <integer>15</integer>
-</dict>
-</plist>
-EOL
-##################################################################################################
-
-##################################################################################################
-    # Create WagmiOS Frontend service
-    cat > ~/Library/LaunchAgents/com.wagmios.frontend.plist << EOL
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.wagmios.frontend</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/pnpm</string>
-        <string>dev</string>
-    </array>
-    <key>WorkingDirectory</key>
-    <string>%h/WagmiOS/wagmios/frontend</string>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>StandardOutPath</key>
-    <string>/tmp/wagmios-frontend.log</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/wagmios-frontend.error.log</string>
-    <key>StartInterval</key>
-    <integer>25</integer>
-</dict>
-</plist>
-EOL
-##################################################################################################
-
-##################################################################################################
-    # Load services in order with delays
-    launchctl load ~/Library/LaunchAgents/com.wagmios.backend.plist
-    sleep 10  # Wait for backend to fully initialize
-    launchctl load ~/Library/LaunchAgents/com.wagmios.frontend.plist
-fi
-
-##################################################################################################
-
-##################################################################################################
-#!/bin/bash
-if [ "\$(uname)" == "Darwin" ]; then
-    
-    launchctl load ~/Library/LaunchAgents/com.wagmios.backend.plist
-    sleep 10
-    launchctl load ~/Library/LaunchAgents/com.wagmios.frontend.plist
-else
-    
-    
-    sudo systemctl start wagmios-backend.service
-    sleep 10
-    sudo systemctl start wagmios-frontend.service
-fi
-##################################################################################################
-cat > stop-services.sh << EOL
-#!/bin/bash
-if [ "\$(uname)" == "Darwin" ]; then
-    launchctl unload ~/Library/LaunchAgents/com.wagmios.frontend.plist
-    launchctl unload ~/Library/LaunchAgents/com.wagmios.backend.plist
-    
-else
-    sudo systemctl stop wagmios-frontend.service
-    sudo systemctl stop wagmios-backend.service
-    
-fi
-EOL
-
-##################################################################################################
-
-##################################################################################################
-
 # Setup backend
 #cd into backend-go and start service
 cd "$HOME/wagmios/backend-go"
 echo "Setting up backend..."
+
+# Update Go version in go.mod to 1.18
+if [ -f "go.mod" ]; then
+    echo "Updating Go version in go.mod to 1.18..."
+    sed -i 's/go 1.22/go 1.18/' go.mod
+    if [ $? -ne 0 ]; then
+        echo "❌ Error: Failed to update Go version in go.mod"
+        exit 1
+    fi
+else
+    echo "Initializing go.mod with Go 1.18..."
+    cat > go.mod << EOL
+module wagmios
+
+go 1.18
+EOL
+fi
+
 go mod tidy
 go build ./...
 sudo systemctl enable wagmios-backend
@@ -483,9 +335,7 @@ else
     systemctl status wagmios-backend
     exit 1
 fi
-######################################################################################################    
-
-
+##################################################################################################
 # Start up Web Page for WagmiOS
 echo "Verifying frontend setup..."
 cd "$HOME/wagmios/frontend"
@@ -506,28 +356,16 @@ else
     systemctl status wagmios-frontend  
     exit 1
 fi
-
-######################################################################################################
-
+##################################################################################################
 # Check if frontend is responding
 # Get network IP
-if [ "$OS_TYPE" = "macos" ]; then
-    IP_ADDR=$(ipconfig getifaddr en0 || ipconfig getifaddr en1)
-else
-    IP_ADDR=$(hostname -I | awk '{print $1}')
-fi
-
+IP_ADDR=$(hostname -I | awk '{print $1}')
+##################################################################################################
 # Final success message
-echo "
-🎉 Installation Complete! Your WagmiOS Environment is Ready!
-
-Access your applications at:
-💾 WagmiOS: http://localhost:5174 or http://${IP_ADDR}:5174
-
-Services are running and will automatically start on system boot.
-"
-echo "Use ./start-services.sh to start all services"
-echo "Use ./stop-services.sh to stop all services"
+echo "\n🎉 Installation Complete! Your WagmiOS Environment is Ready!\n"
+echo "💾 WagmiOS: http://localhost:5174 or http://${IP_ADDR}:5174\n"
+echo "Services will automatically start on system boot."
+echo "Don't want services to start on boot? head over to the github and review the guide"
 
 
 fi  # Close the Linux-specific service configuration block
