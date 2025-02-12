@@ -5,12 +5,10 @@
 - [Introduction](#introduction)
 - [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Configuration](#configuration)
+- [Setup](#usage)
 - [Examples](#examples)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+
+
 
 ---
 
@@ -22,13 +20,25 @@ WagmiOS is a self hosted dashboard that will help control your agent as well as 
 
 ## ✨ Features
 ✅ Feature 1 - Full Selfhosted frontend that ties into you overall hardware and Agent 
-✅ Feature 2 -  Asks as a self hosted homepage. Bookmark all of your favorite sites
-✅ Soon  - A full pleged docker marketplace. self host to your hears content <3  
+✅ Feature 2 - Self hosted homepage. Bookmark all of your favorite sites
+
 
 ---
 
 ## ⚡ Installation
-1 command: `git clone https://github.com/mentholmike/wagmios.git && cd wagmios && ./install.sh`
+for linux flavors: 1 command: `git clone https://github.com/mentholmike/wagmios.git && cd wagmios && ./install.sh`
 
-### **Setup**
+
+---
+
+## 🔧 **Setup**
 install this script and then headover to localhost:5174 or yourip:5174
+
+
+---
+
+
+## 🐧 **Example**
+
+
+
