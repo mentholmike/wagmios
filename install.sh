@@ -368,7 +368,8 @@ IP_ADDR=$(hostname -I | awk '{print $1}')
 echo "\n🎉 Installation Complete! Your WagmiOS Environment is Ready!\n"
 echo "💾 WagmiOS: http://localhost:5174 or http://${IP_ADDR}:5174\n"
 echo "Services will automatically start on system boot."
-echo "Don't want services to start on boot? head over to the github and review the guide"
+echo "to stop services use ./stop-services.sh"
+echo "to start services use ./start-services.sh"
 
 
 fi  # Close the Linux-specific service configuration block
