@@ -9,6 +9,7 @@
 - [Examples](#examples)
 - [Tested Systems](#tests)
 - [Upcoming Features](#upcoming)
+- [Security](#security)
 
 
 
@@ -47,14 +48,20 @@ install this script and then headover to localhost:5174 or yourip:5174
 ---
 
 ## 💾 **Tested Systems**
-- ✅ Ubuntu (multiple versions) 
-- ✅ debian (bookworm) (should be fine on raspberrypis!)
+-  Ubuntu (multiple versions) ✅
+-  debian (bookworm) (should be fine on raspberrypis!) ✅
 
 
 ---
 
 ## 🔜 **Upcoming Features**
-- ✅ Docker Marketplace 
-- ✅ Crypto Portfolio
-- ✅ Full AI agent intergation
+-  Docker Marketplace ✅
+- Full AI agent intergation ✅
 
+
+
+---
+
+## 🔒 **Security**
+- This Project is still early active developent. As of new this has meant for in home ussage.
+-  ⚠️ Please procced with caution of plannign to use on a VPS and exposing your IP! ⚠️
