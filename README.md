@@ -22,8 +22,8 @@ WagmiOS is a self hosted dashboard that will help control your agent as well as 
 
 ## ✨ Features
 
-✅ Feature 1 - Full Selfhosted frontend that ties into you overall hardware and Agent 
-✅ Feature 2 - Self hosted homepage. Bookmark all of your favorite sites
+- ✅ Feature 1 - Full Selfhosted frontend that ties into you overall hardware and Agent 
+- ✅ Feature 2 - Self hosted homepage. Bookmark all of your favorite sites
 ---
 
 ## ⚡ Installation
@@ -47,13 +47,13 @@ install this script and then headover to localhost:5174 or yourip:5174
 ---
 
 ## 💾 **Tested Systems**
-✅ Ubuntu (multiple versions) 
-✅ debian (bookworm) (should be fine on raspberrypis!)
+- ✅ Ubuntu (multiple versions) 
+- ✅ debian (bookworm) (should be fine on raspberrypis!)
 
 
 ---
 
 ## 🔜 **Upcoming Features**
-✅ Docker Marketplace 
-✅ Crypto Portfolio 
+- ✅ Docker Marketplace 
+- ✅ Crypto Portfolio 
 
