@@ -71,5 +71,5 @@ install this script and then headover to localhost:5174 or yourip:5174
 ---
 
 ## 🔒 **Security**
-- This Project is still early active developent. As of new this has meant for in home ussage.
+- This Project is still early active developent. As of now this has meant for in home ussage.
 -  ⚠️ Please procced with caution of planning to use on a VPS and exposing your IP! ⚠️
