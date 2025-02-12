@@ -55,5 +55,6 @@ install this script and then headover to localhost:5174 or yourip:5174
 
 ## 🔜 **Upcoming Features**
 - ✅ Docker Marketplace 
-- ✅ Crypto Portfolio 
+- ✅ Crypto Portfolio
+- ✅ Full AI agent intergation
 
