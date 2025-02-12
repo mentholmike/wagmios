@@ -36,7 +36,7 @@ WagmiOS is a self hosted dashboard that will help control your agent as well as 
 ---
 
 ## ⚡ Installation
-for linux flavors: 1 command: `git clone https://github.com/mentholmike/wagmios.git && cd wagmios && ./install.sh`
+🐧Linux: `git clone https://github.com/mentholmike/wagmios.git && cd wagmios && ./install.sh`
 
 
 ---
