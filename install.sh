@@ -90,6 +90,9 @@ fi
 
 # Set the base directory
 WAGMI_DIR="$HOME/wagmios"
+
+chmod +x start-services.sh
+chmod +x stop-services.sh
 ##################################################################################################
 # Install and setup NVM with version locking
 function install_and_setup_nvm() {
