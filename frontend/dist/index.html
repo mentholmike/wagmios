@@ -17,7 +17,11 @@
     <link rel="manifest" href="/site.webmanifest">
     
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
+                   connect-src 'self' http://localhost:8080 http://*:8080; 
+                   img-src 'self' http://* https://* data:;
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                   style-src 'self' 'unsafe-inline';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin">
@@ -67,8 +71,8 @@
         min-height: 100vh;
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-2b76f022.js"></script>
-    <link rel="stylesheet" href="/assets/index-6c2575b2.css">
+    <script type="module" crossorigin src="/assets/index-392a76d3.js"></script>
+    <link rel="stylesheet" href="/assets/index-3a7faa22.css">
   </head>
   <body class="h-full">
     <div id="app" class="h-full"></div>

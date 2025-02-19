@@ -1,360 +1,271 @@
 <template>
-  <div class="relative min-h-screen bg-gray-900">
+  <div class="min-h-screen bg-gray-900 text-white">
     <Background3D />
-    
-    <!-- Password Protection Overlay -->
-    <div 
-      v-if="requirePassword" 
-      class="fixed inset-0 backdrop-blur-xl z-50 flex items-center justify-center"
-    >
-      <div class="bg-gray-800/90 rounded-xl p-8 w-96 shadow-2xl">
-        <h3 class="text-2xl font-bold text-white mb-6">Enter Password</h3>
-        <form @submit.prevent="checkPassword">
-          <div class="mb-6">
-            <input 
-              v-model="enteredPassword"
-              type="password"
-              class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter dashboard password"
-              required
-            >
+    <div class="container mx-auto px-4 py-12">
+      <!-- Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
+        <!-- CPU -->
+        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-gray-400 text-sm">CPU Usage</h3>
+            <span class="text-xs text-blue-400">Real-time</span>
           </div>
-          <div v-if="passwordError" class="text-red-500 mb-4">
-            {{ passwordError }}
+          <div class="text-3xl font-bold text-white mb-2">
+            {{ systemMetrics.cpu.toFixed(1) }}%
           </div>
-          <button 
-            type="submit"
-            class="w-full bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
-          >
-            Unlock Dashboard
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div class="relative z-10" :class="{ 'pointer-events-none': requirePassword }">
-      <!-- CoinGecko Widget -->
-      <div class="fixed top-8 left-8 z-20">
-        <gecko-coin-price-chart-widget 
-          locale="en" 
-          dark-mode="true" 
-          outlined="true" 
-          initial-currency="usd"
-        ></gecko-coin-price-chart-widget>
-      </div>
-
-      <div class="container mx-auto px-4 py-12">
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
-          <!-- CPU -->
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-gray-400 text-sm">CPU Usage</h3>
-              <span class="text-xs text-blue-400">Real-time</span>
-            </div>
-            <div class="text-3xl font-bold text-white mb-2">
-              {{ systemMetrics.cpu.toFixed(1) }}%
-            </div>
-            <div class="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                :style="{ width: `${Math.min(systemMetrics.cpu, 100)}%` }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Memory -->
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-gray-400 text-sm">Memory Usage</h3>
-              <span class="text-xs text-green-400">
-                {{ formatBytes(systemMetrics.memory.total) }}
-              </span>
-            </div>
-            <div class="text-3xl font-bold text-white mb-2">
-              {{ ((systemMetrics.memory.used / systemMetrics.memory.total) * 100).toFixed(1) }}%
-            </div>
-            <div class="text-sm text-gray-400 mb-2">
-              {{ formatBytes(systemMetrics.memory.used) }} used
-            </div>
-            <div class="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                class="bg-green-600 h-2 rounded-full transition-all duration-300"
-                :style="{ width: `${(systemMetrics.memory.used / systemMetrics.memory.total) * 100}%` }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Disk -->
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-gray-400 text-sm">Disk Usage</h3>
-              <span class="text-xs text-purple-400">
-                {{ formatBytes(systemMetrics.disk.total) }}
-              </span>
-            </div>
-            <div class="text-3xl font-bold text-white mb-2">
-              {{ ((systemMetrics.disk.used / systemMetrics.disk.total) * 100).toFixed(1) }}%
-            </div>
-            <div class="text-sm text-gray-400 mb-2">
-              {{ formatBytes(systemMetrics.disk.used) }} used
-            </div>
-            <div class="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                class="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                :style="{ width: `${(systemMetrics.disk.used / systemMetrics.disk.total) * 100}%` }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Eliza -->
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-gray-400 text-sm">Eliza Status</h3>
-              <span class="text-xs" :class="systemMetrics.elizaStatus ? 'text-green-400' : 'text-red-400'">
-                {{ systemMetrics.elizaStatus ? 'Connected' : 'Disconnected' }}
-              </span>
-            </div>
-            <div class="flex items-center space-x-3">
-              <div 
-                class="w-3 h-3 rounded-full transition-colors duration-300"
-                :class="systemMetrics.elizaStatus ? 'bg-green-500' : 'bg-red-500'"
-              ></div>
-              <div class="text-white">
-                {{ systemMetrics.elizaStatus ? 'Online' : 'Offline' }}
-                <span v-if="systemMetrics.elizaVersion" class="text-gray-400 text-sm ml-2">
-                  (v{{ systemMetrics.elizaVersion }})
-                </span>
-              </div>
-            </div>
+          <div class="w-full bg-gray-700 rounded-full h-2">
+            <div 
+              class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${Math.min(systemMetrics.cpu, 100)}%` }"
+            ></div>
           </div>
         </div>
 
-        <!-- Social & Docker Containers -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
-          <!-- Telegram Widget -->
+        <!-- Memory -->
+        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-gray-400 text-sm">Memory Usage</h3>
+            <span class="text-xs text-green-400">
+              {{ formatBytes(systemMetrics.memory.total) }}
+            </span>
+          </div>
+          <div class="text-3xl font-bold text-white mb-2">
+            {{ ((systemMetrics.memory.used / systemMetrics.memory.total) * 100).toFixed(1) }}%
+          </div>
+          <div class="text-sm text-gray-400 mb-2">
+            {{ formatBytes(systemMetrics.memory.used) }} used
+          </div>
+          <div class="w-full bg-gray-700 rounded-full h-2">
+            <div 
+              class="bg-green-600 h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${(systemMetrics.memory.used / systemMetrics.memory.total) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Disk -->
+        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-gray-400 text-sm">Disk Usage</h3>
+            <span class="text-xs text-purple-400">
+              {{ formatBytes(systemMetrics.disk.total) }}
+            </span>
+          </div>
+          <div class="text-3xl font-bold text-white mb-2">
+            {{ ((systemMetrics.disk.used / systemMetrics.disk.total) * 100).toFixed(1) }}%
+          </div>
+          <div class="text-sm text-gray-400 mb-2">
+            {{ formatBytes(systemMetrics.disk.used) }} used
+          </div>
+          <div class="w-full bg-gray-700 rounded-full h-2">
+            <div 
+              class="bg-purple-600 h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${(systemMetrics.disk.used / systemMetrics.disk.total) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Eliza -->
+        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-gray-400 text-sm">WILLOW Status</h3>
+            <span class="text-xs" :class="systemMetrics.elizaStatus ? 'text-green-400' : 'text-red-400'">
+              {{ systemMetrics.elizaStatus ? 'Connected' : 'Disconnected' }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div 
+              class="w-3 h-3 rounded-full transition-colors duration-300"
+              :class="systemMetrics.elizaStatus ? 'bg-green-500' : 'bg-red-500'"
+            ></div>
+            <div class="text-white">
+              {{ systemMetrics.elizaStatus ? 'Online' : 'Offline' }}
+              <span v-if="systemMetrics.elizaVersion" class="text-gray-400 text-sm ml-2">
+                (v{{ systemMetrics.elizaVersion }})
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social & Docker Containers -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
+        <!-- Custom Links -->
+        <template v-for="(link, index) in customLinks" :key="index">
           <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300 relative">
             <button 
-              @click.stop="deleteDefaultLink('telegram')"
+              @click.stop="deleteCustomLink(index)"
               class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
             >
               ✕
             </button>
             <div 
-              @click="openPopup('https://web.telegram.org', 'Telegram', 800, 600)"
+              @click="openPopup(link.url, link.title, 800, 600)"
               class="w-full h-full"
             >
               <div class="flex items-center justify-center space-x-4">
-                <div class="text-4xl">📱</div>
-                <div class="text-xl font-bold text-white">Telegram</div>
+                <div class="text-4xl">{{ link.emoji || '🔗' }}</div>
+                <div class="text-xl font-bold text-white">{{ link.title }}</div>
               </div>
               <div class="text-center mt-4 text-gray-400">
-                Click to open Telegram Web
+                Click to open {{ link.title }}
               </div>
             </div>
           </div>
+        </template>
 
-          <!-- Twitter Widget -->
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300 relative">
-            <button 
-              @click.stop="deleteDefaultLink('twitter')"
-              class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
-            >
-              ✕
-            </button>
-            <div 
-              @click="openPopup('https://twitter.com', 'Twitter', 800, 600)"
-              class="w-full h-full"
-            >
-              <div class="flex items-center justify-center space-x-4">
-                <div class="text-4xl">🐦</div>
-                <div class="text-xl font-bold text-white">Twitter</div>
-              </div>
-              <div class="text-center mt-4 text-gray-400">
-                Click to open Twitter Web
-              </div>
-            </div>
-          </div>
-
-          <!-- Docker Coming Soon -->
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg relative">
-            <button 
-              @click.stop="deleteDefaultLink('docker')"
-              class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
-            >
-              ✕
-            </button>
-            <div class="flex items-center justify-center h-full">
-              <div class="text-2xl glow-text">🐳 Docker Coming Soon</div>
-            </div>
-          </div>
-
-          <!-- Custom Links -->
-          <template v-for="(link, index) in customLinks" :key="index">
-            <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300 relative">
-              <button 
-                @click.stop="deleteCustomLink(index)"
-                class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
-              >
-                ✕
-              </button>
-              <div 
-                @click="openPopup(link.url, link.title, 800, 600)"
-                class="w-full h-full"
-              >
-                <div class="flex items-center justify-center space-x-4">
-                  <div class="text-4xl">{{ link.emoji || '🔗' }}</div>
-                  <div class="text-xl font-bold text-white">{{ link.title }}</div>
-                </div>
-                <div class="text-center mt-4 text-gray-400">
-                  Click to open {{ link.title }}
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- Add New Link Button -->
-          <div 
-            class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300"
-            @click="showAddLinkModal = true"
-          >
-            <div class="flex items-center justify-center h-full">
-              <div class="text-4xl text-gray-400 hover:text-white transition-colors">➕</div>
-            </div>
+        <!-- Add New Link Button -->
+        <div 
+          class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300"
+          @click="showAddLinkModal = true"
+        >
+          <div class="flex items-center justify-center h-full">
+            <div class="text-4xl text-gray-400 hover:text-white transition-colors">➕</div>
           </div>
         </div>
+      </div>
 
-        <!-- Add Link Modal -->
-        <div v-if="showAddLinkModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-gray-800 rounded-xl p-6 w-96 shadow-2xl emoji-picker">
-            <h3 class="text-xl font-bold text-white mb-4">Add New Link</h3>
-            <form @submit.prevent="addCustomLink">
-              <div class="mb-4">
-                <label class="block text-gray-400 mb-2">Icon</label>
-                <div class="relative">
-                  <button 
-                    type="button"
-                    @click="showEmojiPicker = !showEmojiPicker"
-                    class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <span class="text-2xl">{{ newLink.emoji || '🔗' }}</span>
-                    <span class="text-gray-400">▼</span>
-                  </button>
-                  
-                  <!-- Emoji Picker Dropdown -->
-                  <div 
-                    v-if="showEmojiPicker"
-                    class="absolute top-full left-0 mt-2 w-full bg-gray-700 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto"
-                  >
-                    <div class="grid grid-cols-6 gap-2 p-3">
-                      <button
-                        v-for="emoji in emojiList"
-                        :key="emoji"
-                        type="button"
-                        @click="selectEmoji(emoji)"
-                        class="text-2xl hover:bg-gray-600 p-2 rounded transition-colors cursor-pointer"
-                      >
-                        {{ emoji }}
-                      </button>
-                    </div>
+      <!-- Add Link Modal -->
+      <div v-if="showAddLinkModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-6 w-96 shadow-2xl emoji-picker">
+          <h3 class="text-xl font-bold text-white mb-4">Add New Link</h3>
+          <form @submit.prevent="addCustomLink">
+            <div class="mb-4">
+              <label class="block text-gray-400 mb-2">Icon</label>
+              <div class="relative">
+                <button 
+                  type="button"
+                  @click="showEmojiPicker = !showEmojiPicker"
+                  class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <span class="text-2xl">{{ newLink.emoji || '🔗' }}</span>
+                  <span class="text-gray-400">▼</span>
+                </button>
+                
+                <!-- Emoji Picker Dropdown -->
+                <div 
+                  v-if="showEmojiPicker"
+                  class="absolute top-full left-0 mt-2 w-full bg-gray-700 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto"
+                >
+                  <div class="grid grid-cols-6 gap-2 p-3">
+                    <button
+                      v-for="emoji in emojiList"
+                      :key="emoji"
+                      type="button"
+                      @click="selectEmoji(emoji)"
+                      class="text-2xl hover:bg-gray-600 p-2 rounded transition-colors cursor-pointer"
+                    >
+                      {{ emoji }}
+                    </button>
                   </div>
                 </div>
               </div>
-              
-              <div class="mb-4">
-                <label class="block text-gray-400 mb-2">Title</label>
-                <input 
-                  v-model="newLink.title"
-                  type="text"
-                  class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter website title"
-                  required
-                >
-              </div>
-              <div class="mb-6">
-                <label class="block text-gray-400 mb-2">URL</label>
-                <input 
-                  v-model="newLink.url"
-                  type="url"
-                  class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://example.com"
-                  required
-                >
-              </div>
-              <div class="flex justify-end space-x-4">
-                <button 
-                  type="button"
-                  @click="closeModal"
-                  class="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Add Link
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Add bottom left branding -->
-        <div class="fixed bottom-8 left-8 z-20 flex flex-col items-start">
-          <div class="text-2xl mb-2 glow-text">
-            💾 WagmiOS
-          </div>
-          <div class="flex items-center space-x-4">
-            <a 
-              href="https://x.com/itzmizzle" 
-              target="_blank" 
-              class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-            >
-              Created by @ITZMIZZLE
-            </a>
-            <a 
-              href="https://wagmilabs.fun" 
-              target="_blank" 
-              class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-            >
-              👷 Labs
-            </a>
-            <a 
-              href="https://github.com/mentholmike/wagmios" 
-              target="_blank" 
-              class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-            >
-              <span class="text-xl">🐙</span> GitHub
-            </a>
-          </div>
-        </div>
-
-        <!-- Dock -->
-        <div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-          <div class="flex items-end gap-2 px-6 py-4 bg-gray-800/20 backdrop-blur-xl rounded-2xl shadow-2xl">
-            <div 
-              v-for="(item, index) in dockItems" 
-              :key="index"
-              class="relative group cursor-pointer"
-              @mouseenter="activeDockItem = index"
-              @mouseleave="activeDockItem = -1"
-              @click="handleDockItemClick(item)"
-            >
-              <div
-                class="w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 text-4xl hover:bg-gray-700/20"
-                :class="{ 'scale-125': activeDockItem === index }"
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-gray-400 mb-2">Title</label>
+              <input 
+                v-model="newLink.title"
+                type="text"
+                class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter website title"
+                required
               >
-                {{ item.emoji }}
-              </div>
-              <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-gray-700 text-white rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                {{ item.label }}
-              </div>
+            </div>
+            <div class="mb-6">
+              <label class="block text-gray-400 mb-2">URL</label>
+              <input 
+                v-model="newLink.url"
+                type="url"
+                class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://example.com"
+                required
+              >
+            </div>
+            <div class="flex justify-end space-x-4">
+              <button 
+                type="button"
+                @click="closeModal"
+                class="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add Link
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Add bottom left branding -->
+      <div class="fixed bottom-8 left-8 z-20 flex flex-col items-start">
+        <div class="text-2xl mb-2 glow-text">
+          💾 WagmiOS
+        </div>
+        <div class="flex items-center space-x-4">
+          <a 
+            href="https://x.com/itzmizzle" 
+            target="_blank" 
+            class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            Created by @ITZMIZZLE
+          </a>
+          <a 
+            href="https://wagmilabs.fun" 
+            target="_blank" 
+            class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            👷 Labs
+          </a>
+          <a 
+            href="https://github.com/mentholmike/wagmios" 
+            target="_blank" 
+            class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            <span class="text-xl">🐙</span> GitHub
+          </a>
+        </div>
+      </div>
+
+      <!-- Dock -->
+      <div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+        <div class="flex items-end gap-2 px-6 py-4 bg-gray-800/20 backdrop-blur-xl rounded-2xl shadow-2xl">
+          <div 
+            v-for="(item, index) in dockItems" 
+            :key="index"
+            class="relative group cursor-pointer"
+            @mouseenter="activeDockItem = index"
+            @mouseleave="activeDockItem = -1"
+            @click="handleDockItemClick(item)"
+          >
+            <div
+              class="w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 text-4xl hover:bg-gray-700/20"
+              :class="{ 'scale-125': activeDockItem === index }"
+            >
+              {{ item.emoji }}
+            </div>
+            <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-gray-700 text-white rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              {{ item.label }}
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Marketplace Modal -->
+      <Marketplace 
+        v-if="showMarketplace" 
+        @close="showMarketplace = false"
+      />
+
+      <!-- Containers Modal -->
+      <Containers 
+        v-if="showContainers" 
+        @close="showContainers = false"
+      />
     </div>
   </div>
 </template>
@@ -362,6 +273,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import Background3D from './components/Background3D.vue'
+import Marketplace from './components/Marketplace.vue'
+import Containers from './components/Containers.vue'
 
 // System metrics
 const systemMetrics = ref({
@@ -374,22 +287,27 @@ const systemMetrics = ref({
 })
 
 const activeDockItem = ref(-1)
+const showMarketplace = ref(false)
+const showContainers = ref(false)
 
 // Get the current host (either localhost or IP)
 const currentHost = window.location.hostname
 
 // Dock configuration
 const dockItems = [
-  { 
-    emoji: '🤖',
-    label: 'Eliza',
-    action: () => window.location.href = `http://${currentHost}:5173`
-  }
+  { emoji: '🐳', label: 'Marketplace' },
+  { emoji: '📦', label: 'Containers' },
 ]
 
-const handleDockItemClick = (item: typeof dockItems[0]) => {
-  if (item.action) {
-    item.action()
+const handleDockItemClick = (item: { emoji: string, label: string }) => {
+  console.log('Clicked dock item:', item.label) // Add this for debugging
+  switch (item.label) {
+    case 'Marketplace':
+      showMarketplace.value = true
+      break
+    case 'Containers':
+      showContainers.value = true
+      break
   }
 }
 
@@ -579,28 +497,31 @@ const closeModal = () => {
   }
 }
 
-// Click outside to close emoji picker
-onMounted(() => {
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement
-    if (!target.closest('.emoji-picker') && showEmojiPicker.value) {
-      showEmojiPicker.value = false
+// Custom links persistence
+const STORAGE_KEY = 'wagmios_custom_links'
+
+// Load links from localStorage
+const loadCustomLinks = () => {
+  try {
+    const savedLinks = localStorage.getItem(STORAGE_KEY)
+    if (savedLinks) {
+      customLinks.value = JSON.parse(savedLinks)
     }
-  })
-
-  // Load custom links from localStorage
-  const savedLinks = localStorage.getItem('customLinks')
-  if (savedLinks) {
-    customLinks.value = JSON.parse(savedLinks)
+  } catch (error) {
+    console.error('Error loading custom links:', error)
+    // If there's an error, initialize with empty array
+    customLinks.value = []
   }
+}
 
-  fetchMetrics()
-  const interval = setInterval(fetchMetrics, 2000)
-
-  onUnmounted(() => {
-    clearInterval(interval)
-  })
-})
+// Save links to localStorage
+const saveCustomLinks = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customLinks.value))
+  } catch (error) {
+    console.error('Error saving custom links:', error)
+  }
+}
 
 // Updated add custom link function
 const addCustomLink = () => {
@@ -615,85 +536,47 @@ const addCustomLink = () => {
     emoji: newLink.value.emoji
   })
 
-  localStorage.setItem('customLinks', JSON.stringify(customLinks.value))
+  saveCustomLinks() // Save after adding
   closeModal()
 }
+
+// Updated delete custom link function
+const deleteCustomLink = (index: number) => {
+  customLinks.value.splice(index, 1)
+  saveCustomLinks() // Save after deleting
+}
+
+// Click outside to close emoji picker
+onMounted(() => {
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement
+    if (!target.closest('.emoji-picker') && showEmojiPicker.value) {
+      showEmojiPicker.value = false
+    }
+  })
+
+  loadCustomLinks() // Load links when component mounts
+  
+  fetchMetrics()
+  const interval = setInterval(fetchMetrics, 2000)
+
+  onUnmounted(() => {
+    clearInterval(interval)
+  })
+
+  // Add error handling for window events
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY) {
+      loadCustomLinks() // Reload links if they change in another tab
+    }
+  })
+})
 
 onUnmounted(() => {
   activePopups.value.forEach((popup) => {
     popup.window?.close()
   })
 })
-
-// Add default links state
-const defaultLinks = ref({
-  telegram: true,
-  twitter: true,
-  docker: true
-})
-
-// Load default links state from localStorage
-onMounted(() => {
-  const savedDefaultLinks = localStorage.getItem('defaultLinks')
-  if (savedDefaultLinks) {
-    defaultLinks.value = JSON.parse(savedDefaultLinks)
-  }
-})
-
-// Delete default link
-const deleteDefaultLink = (linkName: 'telegram' | 'twitter' | 'docker') => {
-  defaultLinks.value[linkName] = false
-  localStorage.setItem('defaultLinks', JSON.stringify(defaultLinks.value))
-}
-
-// Delete custom link
-const deleteCustomLink = (index: number) => {
-  customLinks.value.splice(index, 1)
-  localStorage.setItem('customLinks', JSON.stringify(customLinks.value))
-}
-
-// Add password protection state
-const requirePassword = ref(false)
-const enteredPassword = ref('')
-const passwordError = ref('')
-
-// Update password check on mount
-onMounted(async () => {
-  try {
-    const response = await fetch('/api/auth/check')
-    const data = await response.json()
-    if (data.hasPassword) {
-      requirePassword.value = true
-    }
-  } catch (err) {
-    console.error('Failed to check password status:', err)
-  }
-
-  // ... rest of your onMounted code ...
-})
-
-// Password check function
-const checkPassword = async () => {
-  try {
-    const response = await fetch('/api/auth/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ password: enteredPassword.value }),
-    })
-
-    if (response.ok) {
-      requirePassword.value = false
-      enteredPassword.value = ''
-      passwordError.value = ''
-    } else {
-      passwordError.value = 'Incorrect password'
-    }
-  } catch (err) {
-    passwordError.value = 'Failed to verify password'
-  }
-}
 </script>
 
 <style>

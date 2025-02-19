@@ -91,8 +91,9 @@ fi
 # Set the base directory
 WAGMI_DIR="$HOME/wagmios"
 
-chmod +x start-services.sh
-chmod +x stop-services.sh
+# Install Docker and add user to docker group
+sudo apt install docker.io docker-compose -y
+sudo usermod -aG docker $USER
 ##################################################################################################
 # Install and setup NVM with version locking
 function install_and_setup_nvm() {
@@ -164,7 +165,17 @@ pnpm install -g \
     nodemon \
     http-server \
     vue-tsc \
-    @vue/tsconfig
+    @vue/tsconfig \
+    @vitejs/plugin-vue \
+    @types/node
+
+# Also install as dev dependency in the frontend directory
+echo "Installing TypeScript configuration as dev dependency..."
+cd "$WAGMI_DIR/frontend"
+pnpm add -D @vue/tsconfig @types/node
+
+# Add additional type definitions
+pnpm add -D @types/node @types/web
 
 # Main installation flow
 echo "Starting installation process..."
@@ -196,6 +207,25 @@ if [ -d "$WAGMI_DIR/frontend" ]; then
     echo "Installing dependencies (final pass)..."
     pnpm install
 
+    # Before building the frontend, create a tsconfig.json if it doesn't exist
+    if [ ! -f "tsconfig.json" ]; then
+        cat > tsconfig.json << EOL
+{
+    "extends": "@vue/tsconfig/tsconfig.web.json",
+    "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+    "compilerOptions": {
+        "baseUrl": ".",
+        "lib": ["ES2015", "DOM", "DOM.Iterable"],
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+        "types": ["node"],
+        "strict": false
+    }
+}
+EOL
+    fi
+
     # Build the project
     echo "Building the frontend..."
     NODE_ENV=production pnpm build
@@ -203,15 +233,20 @@ fi
 ##################################################################################################
 # Install Go
 echo "Installing Go..."
-GO_VERSION="1.18.10"
-wget "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+GO_VERSION="1.19.13"
+wget "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
 sudo rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
 rm "go${GO_VERSION}.linux-amd64.tar.gz"
 
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+# Add Go to PATH if not already present
+if ! grep -q "/usr/local/go/bin" ~/.bashrc; then
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+fi
 source ~/.bashrc
-go version
+
+# Verify Go installation
+/usr/local/go/bin/go version
 
 # Install Go dependencies
 echo "Installing Go dependencies..."
@@ -219,7 +254,7 @@ TEMP_GO_DIR=$(mktemp -d)
 cd "$TEMP_GO_DIR"
 cat > go.mod << EOL
 module temp
-go 1.18
+go 1.19
 EOL
 go get github.com/gorilla/mux@latest
 go get github.com/rs/cors@latest
@@ -250,10 +285,13 @@ fi
 
 echo "Using pnpm from: $PNPM_PATH"
 
+# Create systemd service for backend
 sudo tee /etc/systemd/system/wagmios-backend.service > /dev/null << EOL
 [Unit]
 Description=WagmiOS Backend Service
-After=network.target
+After=network.target docker.service
+Requires=docker.service
+
 [Service]
 Type=simple
 User=$USER
@@ -262,10 +300,12 @@ WorkingDirectory=$HOME/wagmios/backend-go
 ExecStart=/usr/local/go/bin/go run cmd/server/main.go
 Restart=always
 RestartSec=10
+
 [Install]
 WantedBy=multi-user.target
 EOL
 
+# Reload systemd and restart service
 sudo systemctl daemon-reload
 sudo systemctl enable wagmios-backend
 sudo systemctl restart wagmios-backend
@@ -302,25 +342,23 @@ sudo systemctl restart wagmios-frontend
 
 ##################################################################################################
 # Setup backend
-#cd into backend-go and start service
-cd "$HOME/wagmios/backend-go"
 echo "Setting up backend..."
+cd "$WAGMI_DIR/backend-go"
 
-# Update Go version in go.mod to 1.18
+# Update Go version in go.mod if it exists
 if [ -f "go.mod" ]; then
-    echo "Updating Go version in go.mod to 1.18..."
-    sed -i 's/go 1.22/go 1.18/' go.mod
+    echo "Updating Go version in go.mod to 1.19..."
+    sed -i 's/go 1.2[0-9]/go 1.19/' go.mod
     if [ $? -ne 0 ]; then
         echo "❌ Error: Failed to update Go version in go.mod"
         exit 1
     fi
-else
-    echo "Initializing go.mod with Go 1.18..."
-    cat > go.mod << EOL
-module wagmios
+fi
 
-go 1.18
-EOL
+# Initialize module if go.mod doesn't exist
+if [ ! -f "go.mod" ]; then
+    go mod init wagmios
+    echo "go 1.19" >> go.mod
 fi
 
 go mod tidy
@@ -368,9 +406,8 @@ IP_ADDR=$(hostname -I | awk '{print $1}')
 echo "\n🎉 Installation Complete! Your WagmiOS Environment is Ready!\n"
 echo "💾 WagmiOS: http://localhost:5174 or http://${IP_ADDR}:5174\n"
 echo "Services will automatically start on system boot."
-echo "to stop services use ./stop-services.sh"
-echo "to start services use ./start-services.sh"
-
-
-fi  # Close the Linux-specific service configuration block
-fi      # Close the OS type check block
+echo "to stop services use sudo systemctl stop wagmios-frontend/wagmios-backend"
+echo "to start services use sudo systemctl start wagmios-frontend/wagmios-backend"
+echo "to check status use sudo systemctl status wagmios-frontend/wagmios-backend"
+newgrp docker
+sudo systemctl restart docker
