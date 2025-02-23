@@ -37,12 +37,12 @@ func NewServer() *Server {
 }
 
 func (s *Server) Router() http.Handler {
-	// Single CORS configuration
+	// CORS configuration that allows any origin
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://10.0.150.11:5174", "http://localhost:5174"},
+		AllowedOrigins:   []string{"*"},  // Allow all origins
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Accept", "Authorization", "Origin"},
-		AllowCredentials: true,
+		AllowCredentials: false,  // Must be false when AllowedOrigins is "*"
 		Debug:           true,
 	})
 
