@@ -552,63 +552,6 @@ func (s *Server) handleCreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Special handling for Gluetun
-	if strings.Contains(strings.ToLower(config.Name), "gluetun") {
-		// Check if Gluetun is already running
-		checkCmd := exec.Command("docker", "ps", "-q", "-f", "name=gluetun")
-		output, _ := checkCmd.CombinedOutput()
-		if len(output) > 0 {
-			errorMsg := "Gluetun is already running. Please stop and remove the existing instance first."
-			log.Printf("Error: %s", errorMsg)
-			http.Error(w, errorMsg, http.StatusConflict)
-			return
-		}
-
-		// Create fresh Gluetun container
-		args := []string{
-			"run", "-d",
-			"--name", "gluetun",
-			"--restart", "always",
-			"--privileged",
-			"-p", "8388:8388",
-			"-p", "8888:8888",
-			"--cap-add=NET_ADMIN",
-		}
-
-		// Add environment variables
-		for _, env := range config.Env {
-			args = append(args, "-e", fmt.Sprintf("%s=%s", env.Key, env.Value))
-		}
-
-		args = append(args, config.Image)
-
-		log.Printf("Executing Gluetun setup: docker %s", strings.Join(args, " "))
-		cmd := exec.Command("docker", args...)
-		if output, err := cmd.CombinedOutput(); err != nil {
-			// If the error is about TUN device, provide helpful message
-			if strings.Contains(string(output), "/dev/net/tun") {
-				errorMsg := "Gluetun requires the TUN device. Please run these commands first:\n" +
-					"sudo mkdir -p /dev/net\n" +
-					"sudo mknod /dev/net/tun c 10 200\n" +
-					"sudo chmod 666 /dev/net/tun"
-				log.Printf("Error: %s", errorMsg)
-				http.Error(w, errorMsg, http.StatusInternalServerError)
-				return
-			}
-			errorMsg := fmt.Sprintf("Failed to setup Gluetun: %v\nOutput: %s", err, string(output))
-			log.Printf("Error: %s", errorMsg)
-			http.Error(w, errorMsg, http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "success",
-			"message": "Gluetun setup completed successfully",
-		})
-		return
-	}
-
 	// Regular container creation logic for non-Gluetun containers
 	// Check if container exists and remove it
 	checkCmd := exec.Command("docker", "ps", "-a", "--filter", fmt.Sprintf("name=%s", config.Name), "--format", "{{.ID}}")
