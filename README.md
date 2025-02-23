@@ -53,8 +53,9 @@ install this script and then headover to localhost:5174 or yourip:5174
 
 ## 🐧 **Example**
 
+<img width="1431" alt="Screenshot 2025-02-22 at 5 47 46 PM" src="https://github.com/user-attachments/assets/794cf926-0d12-42e4-abfa-60e269795a0f" />
 
-<img width="1439" alt="Screenshot 2025-02-18 at 7 40 34 PM" src="https://github.com/user-attachments/assets/be9df67c-849f-49c8-82ea-b4e1a317b630" />
+
 
 
 ---
