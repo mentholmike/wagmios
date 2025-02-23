@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  willow:
+    image: n8nio/n8n
+    container_name: willow
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_SECURE_COOKIE=false
+      - N8N_DEFAULT_WORKFLOW_STATE=active
+      - N8N_LOG_LEVEL=info
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_DATABASE=willow_memories
+      - DB_POSTGRESDB_USER=willow
+      - DB_POSTGRESDB_PASSWORD=wagmios
+    volumes:
+      - willow_data:/home/node/.n8n
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=willow
+      - POSTGRES_PASSWORD=wagmios
+      - POSTGRES_DB=willow_memories
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  willow_data:
+  postgres_data: 
