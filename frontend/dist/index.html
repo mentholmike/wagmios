@@ -18,12 +18,11 @@
     
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
-                   connect-src 'self' http://localhost:8080 http://*:8080; 
+                   connect-src 'self' http://localhost:8080 http://*:8080 http://*:5174; 
                    img-src 'self' http://* https://* data:;
                    script-src 'self' 'unsafe-inline' 'unsafe-eval';
                    style-src 'self' 'unsafe-inline';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin">
     
     <!-- PWA Support -->
@@ -46,10 +45,6 @@
     <meta property="twitter:description" content="Your Awesome System Dashboard - Manage your containers with ease">
     <meta property="twitter:image" content="/og-image.png">
     
-    <!-- Preload Critical Assets -->
-    <link rel="preload" href="data:video/mp2t;base64,aW1wb3J0IHsgY3JlYXRlQXBwIH0gZnJvbSAndnVlJwppbXBvcnQgeyBjcmVhdGVQaW5pYSB9IGZyb20gJ3BpbmlhJwppbXBvcnQgQXBwIGZyb20gJy4vQXBwLnZ1ZScKaW1wb3J0ICcuL3N0eWxlLmNzcycKaW1wb3J0IHJvdXRlciBmcm9tICcuL3JvdXRlci9pbmRleCcKCmNvbnN0IGFwcCA9IGNyZWF0ZUFwcChBcHApCmNvbnN0IHBpbmlhID0gY3JlYXRlUGluaWEoKQoKYXBwLnVzZShwaW5pYSkKYXBwLnVzZShyb3V0ZXIpCmFwcC5tb3VudCgnI2FwcCcpCgo=" as="script" type="module">
-    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
-    
     <!-- Preconnect to External Domains -->
     <link rel="preconnect" href="https://hub.docker.com">
     
@@ -71,8 +66,8 @@
         min-height: 100vh;
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-392a76d3.js"></script>
-    <link rel="stylesheet" href="/assets/index-3a7faa22.css">
+    <script type="module" crossorigin src="/assets/index-1c129e0b.js"></script>
+    <link rel="stylesheet" href="/assets/index-b5e9e0d1.css">
   </head>
   <body class="h-full">
     <div id="app" class="h-full"></div>

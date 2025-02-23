@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"github.com/mikesposito/WagmiOS/backend-go/internal/api"
+	"wagmios/internal/api"
 )
 
 func main() {
@@ -19,8 +19,8 @@ func main() {
 	server := api.NewServer()
 
 	// Start the server
-	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Server starting on port %s", port)
+	addr := fmt.Sprintf("0.0.0.0:%s", port)
+	log.Printf("Server starting on %s", addr)
 	
 	// Use the server's router with CORS middleware
 	if err := http.ListenAndServe(addr, server.Router()); err != nil {

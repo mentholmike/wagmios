@@ -18,12 +18,11 @@
     
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
-                   connect-src 'self' http://localhost:8080 http://*:8080; 
+                   connect-src 'self' http://localhost:8080 http://*:8080 http://*:5174; 
                    img-src 'self' http://* https://* data:;
                    script-src 'self' 'unsafe-inline' 'unsafe-eval';
                    style-src 'self' 'unsafe-inline';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin">
     
     <!-- PWA Support -->
@@ -45,10 +44,6 @@
     <meta property="twitter:title" content="WAGMIOS">
     <meta property="twitter:description" content="Your Awesome System Dashboard - Manage your containers with ease">
     <meta property="twitter:image" content="/og-image.png">
-    
-    <!-- Preload Critical Assets -->
-    <link rel="preload" href="/src/main.ts" as="script" type="module">
-    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin>
     
     <!-- Preconnect to External Domains -->
     <link rel="preconnect" href="https://hub.docker.com">

@@ -496,52 +496,6 @@ const removeCapability = (cap: string) => {
   form.value.capabilities = form.value.capabilities.filter(c => c !== cap)
 }
 
-const saveAsTemplate = async () => {
-  try {
-    console.log('Attempting to save template...')
-    const templateData = {
-      name: form.value.name + '.json',
-      image: form.value.image,
-      ports: form.value.ports.filter(p => p.host && p.container),
-      volumes: form.value.volumes.filter(v => v.host && v.container),
-      env: form.value.env.filter(e => e.key && e.value),
-      privileged: form.value.privileged,
-      network: form.value.network,
-      capabilities: form.value.capabilities,
-      devices: form.value.devices
-    }
-
-    console.log('Template data to save:', templateData)
-    statusMessage.value = 'Saving template...'
-    statusType.value = 'info'
-
-    // Use TEMPLATES_API_URL instead of API_BASE_URL/templates
-    const response = await fetch(TEMPLATES_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(templateData)
-    })
-
-    console.log('Template save URL:', TEMPLATES_API_URL)
-    
-    const data = await response.text()
-    console.log('Server response:', data)
-
-    if (!response.ok) {
-      throw new Error(data || `Server returned ${response.status}`)
-    }
-
-    statusMessage.value = 'Template saved successfully'
-    statusType.value = 'success'
-  } catch (error) {
-    console.error('Error saving template:', error)
-    statusMessage.value = error instanceof Error ? error.message : 'Failed to save template'
-    statusType.value = 'error'
-  }
-}
-
 const templates = ref<{ name: string; displayName: string }[]>([])
 
 onMounted(async () => {
@@ -550,114 +504,77 @@ onMounted(async () => {
 
 const fetchTemplates = async () => {
   try {
-    console.log('Fetching templates from:', `${TEMPLATES_API_URL}`)
-    const response = await fetch(`${TEMPLATES_API_URL}`)
-    if (!response.ok) throw new Error('Failed to fetch templates')
+    const apiUrl = `http://${window.location.hostname}:8080/api/containers/templates`
+    console.log('Fetching templates from:', apiUrl)
+    const response = await fetch(apiUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch templates: ${response.status}`)
+    }
     const data = await response.json()
     console.log('Fetched templates:', data)
-    
-    // Map the templates to include both name (with .json) and display name (without .json)
+
+    // Map the templates to include both name and display name, strip .json extension
     templates.value = data.map((template: any) => ({
-      name: template.name,
-      displayName: template.name.replace('.json', '')
+      name: template.name || template.Name,  // handle both cases
+      displayName: (template.name || template.Name).replace('.json', '')
     }))
   } catch (error) {
     console.error('Error fetching templates:', error)
   }
 }
 
-const loadTemplate = async () => {
-  if (!selectedTemplate.value) return
-  
-  try {
-    console.log('Loading template:', selectedTemplate.value)
-    statusMessage.value = 'Loading template...'
-    statusType.value = 'info'
-
-    const templateName = selectedTemplate.value.endsWith('.json') 
-      ? selectedTemplate.value 
-      : `${selectedTemplate.value}.json`
-    
-    const response = await fetch(`${TEMPLATES_API_URL}/${encodeURIComponent(templateName)}`)
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load template: ${response.status}`)
-    }
-    
-    const template = await response.json() as Template
-    
-    // Special handling for Gluetun template
-    const isGluetun = template.name.toLowerCase().includes('gluetun')
-    
-    form.value = {
-      name: template.name,
-      image: template.image,
-      ports: Array.isArray(template.ports) ? template.ports.map((p: PortMapping) => {
-        // Keep original ports for Gluetun
-        if (isGluetun) {
-          return {
-            host: p.host,
-            container: p.container,
-            protocol: p.protocol || 'tcp'
-          }
-        }
-        // For other containers, randomize ports
-        return {
-          host: String(parseInt(p.host) + Math.floor(Math.random() * 100)),
-          container: p.container,
-          protocol: p.protocol || 'tcp'
-        }
-      }) : [],
-      volumes: Array.isArray(template.volumes) ? template.volumes.map((v: VolumeMapping) => ({
-        host: v.host,
-        container: v.container
-      })) : [],
-      env: Array.isArray(template.env) ? template.env.map((e: EnvVar) => ({
-        key: e.key,
-        value: e.value
-      })) : [],
-      privileged: Boolean(template.privileged),
-      network: template.network || '',
-      capabilities: Array.isArray(template.capabilities) ? [...template.capabilities] : [],
-      devices: template.devices || ['/dev/net/tun']
-    }
-
-    // If it's Gluetun, ensure specific ports are set
-    if (isGluetun) {
-      const requiredPorts = [
-        { host: '8388', container: '8388' },
-        { host: '8888', container: '8888' }
-      ]
-      
-      // Add any missing required ports
-      requiredPorts.forEach(port => {
-        if (!form.value.ports.some(p => p.container === port.container)) {
-          form.value.ports.push({
-            host: port.host,
-            container: port.container,
-            protocol: 'tcp'
-          })
-        }
-      })
-    }
-
-    console.log('Updated form with template data:', form.value)
-    statusMessage.value = 'Template loaded successfully'
-    statusType.value = 'success'
-  } catch (error) {
-    console.error('Error loading template:', error)
-    statusMessage.value = error instanceof Error ? error.message : 'Failed to load template'
-    statusType.value = 'error'
-  }
-}
-
-// Update the template selection handler
 const onTemplateSelect = async () => {
   console.log('Template selected:', selectedTemplate.value)
   if (selectedTemplate.value) {
-    await loadTemplate()
+    try {
+      // Ensure the template name has .json extension
+      const templateName = selectedTemplate.value.endsWith('.json') 
+        ? selectedTemplate.value 
+        : `${selectedTemplate.value}.json`
+      
+      const apiUrl = `http://${window.location.hostname}:8080/api/containers/templates/${encodeURIComponent(templateName)}`
+      console.log('Loading template from:', apiUrl)
+      
+      const response = await fetch(apiUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to load template: ${response.status}`)
+      }
+      
+      const template = await response.json()
+      console.log('Loaded template data:', template)
+      
+      // Update form with template data, using lowercase field names
+      form.value = {
+        name: template.name || '',
+        image: template.image || '',
+        ports: Array.isArray(template.ports) ? template.ports.map((p: any) => ({
+          host: p.host || '',
+          container: p.container || '',
+          protocol: p.protocol || 'tcp'
+        })) : [{ host: '', container: '', protocol: 'tcp' }],
+        volumes: Array.isArray(template.volumes) ? template.volumes.map((v: any) => ({
+          host: v.host || '',
+          container: v.container || ''
+        })) : [{ host: '', container: '' }],
+        env: Array.isArray(template.env) ? template.env.map((e: any) => ({
+          key: e.key || '',
+          value: e.value || ''
+        })) : [{ key: '', value: '' }],
+        privileged: Boolean(template.privileged),
+        network: template.network || '',
+        capabilities: Array.isArray(template.capabilities) ? [...template.capabilities] : [],
+        devices: Array.isArray(template.devices) ? [...template.devices] : []
+      }
+
+      statusMessage.value = 'Template loaded successfully'
+      statusType.value = 'success'
+    } catch (error) {
+      console.error('Error loading template:', error)
+      statusMessage.value = error instanceof Error ? error.message : 'Failed to load template'
+      statusType.value = 'error'
+    }
   } else {
-    // Reset form to default state
+    // Reset form only when no template is selected
     form.value = {
       name: '',
       image: '',
@@ -667,7 +584,7 @@ const onTemplateSelect = async () => {
       privileged: false,
       network: '',
       capabilities: [],
-      devices: ['/dev/net/tun']
+      devices: []
     }
   }
 }
@@ -682,6 +599,60 @@ const removeDevice = (index: number) => {
 
 const handleClose = () => {
   emit('close')
+}
+
+const saveAsTemplate = async () => {
+  try {
+    console.log('Attempting to save template...')
+    // Ensure template name has .json extension
+    const templateName = form.value.name.endsWith('.json') 
+      ? form.value.name 
+      : `${form.value.name}.json`
+      
+    const templateData = {
+      name: templateName,
+      image: form.value.image,
+      ports: form.value.ports.filter(p => p.host && p.container),
+      volumes: form.value.volumes.filter(v => v.host && v.container),
+      env: form.value.env.filter(e => e.key && e.value),
+      privileged: form.value.privileged,
+      network: form.value.network,
+      capabilities: form.value.capabilities,
+      devices: form.value.devices
+    }
+
+    const apiUrl = `http://${window.location.hostname}:8080/api/containers/templates`
+    console.log('Template data to save:', templateData)
+    statusMessage.value = 'Saving template...'
+    statusType.value = 'info'
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(templateData)
+    })
+
+    console.log('Template save response status:', response.status)
+    
+    const data = await response.text()
+    console.log('Server response:', data)
+
+    if (!response.ok) {
+      throw new Error(data || `Server returned ${response.status}`)
+    }
+
+    statusMessage.value = 'Template saved successfully'
+    statusType.value = 'success'
+    
+    // Refresh templates list after saving
+    await fetchTemplates()
+  } catch (error) {
+    console.error('Error saving template:', error)
+    statusMessage.value = error instanceof Error ? error.message : 'Failed to save template'
+    statusType.value = 'error'
+  }
 }
 </script>
 

@@ -181,7 +181,6 @@ pnpm add -D @types/node @types/web
 echo "Starting installation process..."
 
 ##################################################################################################
-#install_and_setup_nvm
 
 # Setup WagmiOS frontend with Node.js 18 FIRST
 if [ -d "$WAGMI_DIR/frontend" ]; then
@@ -233,7 +232,7 @@ fi
 ##################################################################################################
 # Install Go
 echo "Installing Go..."
-GO_VERSION="1.19.13"
+GO_VERSION="1.18.3"
 wget "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
 sudo rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
@@ -254,52 +253,62 @@ TEMP_GO_DIR=$(mktemp -d)
 cd "$TEMP_GO_DIR"
 cat > go.mod << EOL
 module temp
-go 1.19
+go 1.18
 EOL
 go get github.com/gorilla/mux@latest
 go get github.com/rs/cors@latest
 go get github.com/joho/godotenv@latest
 go get github.com/lib/pq@latest
 go get github.com/go-redis/redis/v8@latest
-cd - > /dev/null
-rm -rf "$TEMP_GO_DIR"
 
-##################################################################################################
-# Update router configuration
-if [ -f "$WAGMI_DIR/frontend/src/router/index.js" ]; then
-    echo "Updating router configuration..."
-    sed -i.bak '/path: .settings./d' "$WAGMI_DIR/frontend/src/router/index.js"
-    sed -i.bak '/component: Settings/d' "$WAGMI_DIR/frontend/src/router/index.js"
-    sed -i.bak '/import Settings/d' "$WAGMI_DIR/frontend/src/router/index.js"
-    rm -f "$WAGMI_DIR/frontend/src/router/index.js.bak"
-fi 
 
-##################################################################################################
-# Setup system services
-echo "Setting up system services..."
-PNPM_PATH=$(which pnpm)
-if [ -z "$PNPM_PATH" ]; then
-    echo "❌ Error: pnpm not found in PATH"
-    exit 1
-fi
+# Setup backend
+echo "Setting up backend..."
+cd "$WAGMI_DIR/backend-go"
 
-echo "Using pnpm from: $PNPM_PATH"
+# Create a fresh go.mod file
+echo "Creating go.mod file..."
+cat > go.mod << EOL
+module wagmios
+
+go 1.18
+
+require (
+	github.com/gorilla/mux v1.8.1
+	github.com/rs/cors v1.11.1
+	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.9
+	github.com/go-redis/redis/v8 v8.11.5
+)
+
+require (
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+)
+EOL
+
+# Initialize and tidy the module
+go mod tidy
+go build ./...
 
 # Create systemd service for backend
 sudo tee /etc/systemd/system/wagmios-backend.service > /dev/null << EOL
 [Unit]
-Description=WagmiOS Backend Service
-After=network.target docker.service
-Requires=docker.service
+Description=WAGMIOS Backend Service
+After=network.target
+Wants=network.target
 
 [Service]
 Type=simple
 User=$USER
 Group=$USER
+Environment="PORT=8080"
 WorkingDirectory=$HOME/wagmios/backend-go
-ExecStart=/usr/local/go/bin/go run cmd/server/main.go
+ExecStart=/usr/local/go/bin/go run $HOME/wagmios/backend-go/cmd/server/main.go
 Restart=always
-RestartSec=10
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -316,6 +325,26 @@ sudo systemctl restart wagmios-backend
     systemctl status wagmios-backend --no-pager
 
 ##################################################################################################
+# Update router configuration
+if [ -f "$WAGMI_DIR/frontend/src/router/index.js" ]; then
+    echo "Updating router configuration..."
+    sed -i.bak '/path: .settings./d' "$WAGMI_DIR/frontend/src/router/index.js"
+    sed -i.bak '/component: Settings/d' "$WAGMI_DIR/frontend/src/router/index.js"
+    sed -i.bak '/import Settings/d' "$WAGMI_DIR/frontend/src/router/index.js"
+    rm -f "$WAGMI_DIR/frontend/src/router/index.js.bak"
+fi 
+##################################################################################################
+# Setup system services
+echo "Setting up system services..."
+PNPM_PATH=$(which pnpm)
+if [ -z "$PNPM_PATH" ]; then
+    echo "❌ Error: pnpm not found in PATH"
+    exit 1
+fi
+
+echo "Using pnpm from: $PNPM_PATH"
+##################################################################################################
+
 # Set up frontend service
 sudo tee /etc/systemd/system/wagmios-frontend.service > /dev/null << EOL
 [Unit]
@@ -341,28 +370,7 @@ sudo systemctl enable wagmios-frontend
 sudo systemctl restart wagmios-frontend
 
 ##################################################################################################
-# Setup backend
-echo "Setting up backend..."
-cd "$WAGMI_DIR/backend-go"
-
-# Update Go version in go.mod if it exists
-if [ -f "go.mod" ]; then
-    echo "Updating Go version in go.mod to 1.19..."
-    sed -i 's/go 1.2[0-9]/go 1.19/' go.mod
-    if [ $? -ne 0 ]; then
-        echo "❌ Error: Failed to update Go version in go.mod"
-        exit 1
-    fi
-fi
-
-# Initialize module if go.mod doesn't exist
-if [ ! -f "go.mod" ]; then
-    go mod init wagmios
-    echo "go 1.19" >> go.mod
-fi
-
-go mod tidy
-go build ./...
+# Start up backend
 sudo systemctl enable wagmios-backend
 sudo systemctl restart wagmios-backend
 sleep 7

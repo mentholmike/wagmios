@@ -65,25 +65,17 @@
           </div>
         </div>
 
-        <!-- Eliza -->
+        <!-- System Time (Replacing WILLOW Status) -->
         <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-gray-400 text-sm">WILLOW Status</h3>
-            <span class="text-xs" :class="systemMetrics.elizaStatus ? 'text-green-400' : 'text-red-400'">
-              {{ systemMetrics.elizaStatus ? 'Connected' : 'Disconnected' }}
-            </span>
+            <h3 class="text-gray-400 text-sm">System Time</h3>
+            <span class="text-xs text-purple-400">Live</span>
           </div>
-          <div class="flex items-center space-x-3">
-            <div 
-              class="w-3 h-3 rounded-full transition-colors duration-300"
-              :class="systemMetrics.elizaStatus ? 'bg-green-500' : 'bg-red-500'"
-            ></div>
-            <div class="text-white">
-              {{ systemMetrics.elizaStatus ? 'Online' : 'Offline' }}
-              <span v-if="systemMetrics.elizaVersion" class="text-gray-400 text-sm ml-2">
-                (v{{ systemMetrics.elizaVersion }})
-              </span>
-            </div>
+          <div class="text-3xl font-bold mb-2">
+            <span class="gradient-text">{{ formatTime(systemMetrics.currentTime) }}</span>
+          </div>
+          <div class="text-sm text-gray-400">
+            {{ formatDate(systemMetrics.currentTime) }}
           </div>
         </div>
       </div>
@@ -201,34 +193,24 @@
         </div>
       </div>
 
-      <!-- Add bottom left branding -->
-      <div class="fixed bottom-8 left-8 z-20 flex flex-col items-start">
-        <div class="text-2xl mb-2 glow-text">
-          💾 WagmiOS
-        </div>
-        <div class="flex items-center space-x-4">
-          <a 
-            href="https://x.com/itzmizzle" 
-            target="_blank" 
-            class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-          >
-            Created by @ITZMIZZLE
-          </a>
-          <a 
-            href="https://wagmilabs.fun" 
-            target="_blank" 
-            class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-          >
-            👷 Labs
-          </a>
-          <a 
-            href="https://github.com/mentholmike/wagmios" 
-            target="_blank" 
-            class="text-sm text-gray-400 hover:text-gray-300 transition-colors"
-          >
-            <span class="text-xl">🐙</span> GitHub
-          </a>
-        </div>
+      <!-- Bottom Left Links -->
+      <div class="fixed bottom-4 left-4 flex items-center gap-4 text-gray-400">
+        <a 
+          href="https://wagmilabs.fun"
+          target="_blank" 
+          class="hover:text-white transition-colors flex items-center gap-2"
+        >
+          <span class="text-xl">👷</span>
+          <span>Labs</span>
+        </a>
+        <a 
+          href="https://github.com/mentholmike/"
+          target="_blank"
+          class="hover:text-white transition-colors flex items-center gap-2"
+        >
+          <span class="text-xl">🐙</span>
+          <span>Github</span>
+        </a>
       </div>
 
       <!-- Dock -->
@@ -266,6 +248,9 @@
         v-if="showContainers" 
         @close="showContainers = false"
       />
+
+      <!-- Add WillowChat before the closing div -->
+      <WillowChat />
     </div>
   </div>
 </template>
@@ -275,6 +260,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import Background3D from './components/Background3D.vue'
 import Marketplace from './components/Marketplace.vue'
 import Containers from './components/Containers.vue'
+import WillowChat from './components/WillowChat.vue'
+import { METRICS_API_URL, SYSTEM_API_URL } from './api'  // Import the API URLs
 
 // System metrics
 const systemMetrics = ref({
@@ -283,7 +270,8 @@ const systemMetrics = ref({
   disk: { used: 0, total: 0 },
   uptime: 0,
   elizaStatus: false,
-  elizaVersion: ''
+  elizaVersion: '',
+  currentTime: ''
 })
 
 const activeDockItem = ref(-1)
@@ -447,9 +435,23 @@ const formatBytes = (bytes: number): string => {
 // Fetch metrics
 const fetchMetrics = async () => {
   try {
-    const response = await fetch('/api/system/metrics')
+    const response = await fetch(METRICS_API_URL, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      mode: 'cors'
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const data = await response.json()
-    systemMetrics.value = data
+    systemMetrics.value = {
+      ...systemMetrics.value,
+      ...data
+    }
   } catch (error) {
     console.error('Error fetching metrics:', error)
   }
@@ -558,7 +560,7 @@ onMounted(() => {
   loadCustomLinks() // Load links when component mounts
   
   fetchMetrics()
-  const interval = setInterval(fetchMetrics, 2000)
+  const interval = setInterval(fetchMetrics, 5000)
 
   onUnmounted(() => {
     clearInterval(interval)
@@ -577,6 +579,28 @@ onUnmounted(() => {
     popup.window?.close()
   })
 })
+
+const formatTime = (timeString: string) => {
+  if (!timeString) return '--:--:--'
+  const date = new Date(timeString)
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  })
+}
+
+const formatDate = (timeString: string) => {
+  if (!timeString) return '--/--/----'
+  const date = new Date(timeString)
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
 </script>
 
 <style>
@@ -663,5 +687,26 @@ h1 {
 
 .card:hover .delete-btn {
   opacity: 1;
+}
+
+.gradient-text {
+  background: linear-gradient(45deg, #8B5CF6, #3B82F6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>

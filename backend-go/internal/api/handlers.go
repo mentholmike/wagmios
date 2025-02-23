@@ -3,11 +3,11 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"github.com/mikesposito/WagmiOS/backend-go/internal/system"
+	"wagmios/internal/system"
 )
 
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodOptions {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}

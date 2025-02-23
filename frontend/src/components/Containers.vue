@@ -171,11 +171,9 @@
   const showAddModal = ref(false)
   
   const getApiBaseUrl = () => {
-    // Get the current hostname (IP or domain)
     const hostname = window.location.hostname
-    // Use the same port as your Go backend
     const port = '8080'
-    return `http://${hostname}:${port}/api/containers`
+    return `http://${hostname}:${port}/api/containers`  // Keep containers suffix for this component
   }
   
   const API_BASE_URL = getApiBaseUrl()
