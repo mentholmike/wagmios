@@ -7,6 +7,8 @@ https://wagmilabs.fun
 
 ---
 
+*** Small update: fixed an issue with the backend for gluetun! was only allowing 3 ports.*** 
+
 
 ## 📌 Table of Contents
 - [Introduction](#introduction)
