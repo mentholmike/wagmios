@@ -1,4 +1,4 @@
-# 💾WagmiOS
+# 💾WAGMI
 
 ---
 
@@ -26,7 +26,7 @@ https://wagmilabs.fun
 
 ## 📖 Introduction
 
-WAGMI is a self hosted dashboard that will help control your agent as well as intergrate with features. This dashboard will help you manage your agent more effiecntly along with entertainment options
+WAGMI is a self hosted container management layer with AI intergation. Manage your containers with W.I.L.L.O.W for optimal efficiency.
 
 ---
 
@@ -35,8 +35,7 @@ WAGMI is a self hosted dashboard that will help control your agent as well as in
 - ✅ Feature 1 - Full Selfhosted frontend that ties into you overall hardware and Agent 
 - ✅ Feature 2 - Self hosted homepage. Bookmark all of your favorite sites
 - ✅ Feature 3 - Supports a docker marketplace as well container manamgent UI
-- ✅ Feature 4 - Added Support for W.I.L.L.O.W a AI agent that works as an assitant!
-
+- ✅ Feature 4 - Added Support for W.I.L.L.O.W!
 ---
 
 
@@ -44,7 +43,7 @@ WAGMI is a self hosted dashboard that will help control your agent as well as in
 
 ![WILLOW](https://github.com/user-attachments/assets/012fd163-2d84-4eca-a087-9898475e7229)
 
-W.I.L.L.O.W (Workflow Intelligent Localized Learning & Optimized Worker) is an AI agent specifically designed to help you manage your envirornment. She acts as an oracle that guides you through setting up containers. In addtiton she as a few built in intergrations with HomeAssitant & Jenkins. In future updates she will be able to install containers for you. 
+W.I.L.L.O.W (Workflow Intelligent Localized Learning & Optimized Worker) is an AI agent specifically designed to help you manage your envirornment. She acts as an oracle that guides you through setting up containers. In addtiton she has built in intergrations with HomeAssitant & Jenkins (more coming soon).
 
  Read up here for full details: https://medium.com/@webdevmike01/introducing-w-i-l-l-o-w-827c3e965ef6
 
@@ -79,13 +78,13 @@ install this script and then headover to localhost:5174 or yourip:5174
 ## 💾 **Tested Systems**
 -  Ubuntu (multiple versions) ✅
 -  debian (bookworm) (should be fine on raspberrypis!) ✅
+- LXC Containers have worked, but have to run as root in order to install gluetun
 
 
 ---
 
 ## 🔜 **Upcoming Features**
-- 2Auth 
-
+- Auth 2.0  🔒
 
 
 ---
