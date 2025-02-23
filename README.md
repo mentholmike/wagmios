@@ -25,7 +25,7 @@ https://wagmilabs.fun
 ---
 
 ## 📖 Introduction
-
+#introduction
 WagmiOS is a self hosted dashboard that will help control your agent as well as intergrate with features. This dashboard will help you manage your agent more effiecntly along with entertainment options
 
 ---
