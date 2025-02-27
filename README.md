@@ -1,4 +1,5 @@
-# 💾WAGMI
+
+![Your_paragraph_text-removebg-preview](https://github.com/user-attachments/assets/2e3e1dec-89a3-4414-b031-6672f761ed61)
 
 ---
 
