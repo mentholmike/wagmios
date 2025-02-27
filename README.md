@@ -60,7 +60,7 @@ W.I.L.L.O.W (Workflow Intelligent Localized Learning & Optimized Worker) is an A
 ## ⚡ Installation
 🐧Linux: `git clone https://github.com/mentholmike/wagmios.git && cd wagmios && ./install.sh`
 
-`docker-compose up -d` 
+🤖W.I.L.L.O.W:`docker-compose up -d` 
 
 
 ---
