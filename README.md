@@ -32,7 +32,7 @@ https://wagmilabs.fun
 
 ## 📖 Introduction
 
-WAGMI is a self hosted container management layer with AI intergation. Manage your containers with W.I.L.L.O.W for optimal efficiency.
+WAGMI is a self hosted container management layer with AI integration. Manage your containers with W.I.L.L.O.W for optimal efficiency.
 
 ---
 
@@ -40,7 +40,7 @@ WAGMI is a self hosted container management layer with AI intergation. Manage yo
 
 - ✅ Feature 1 - Full Selfhosted frontend that ties into you overall hardware and Agent 
 - ✅ Feature 2 - Self hosted homepage. Bookmark all of your favorite sites
-- ✅ Feature 3 - Supports a docker marketplace as well container manamgent UI
+- ✅ Feature 3 - Supports a docker marketplace as well container management UI
 - ✅ Feature 4 - Added Support for W.I.L.L.O.W!
 ---
 
@@ -49,7 +49,7 @@ WAGMI is a self hosted container management layer with AI intergation. Manage yo
 
 ![WILLOW](https://github.com/user-attachments/assets/012fd163-2d84-4eca-a087-9898475e7229)
 
-W.I.L.L.O.W (Workflow Intelligent Localized Learning & Optimized Worker) is an AI agent specifically designed to help you manage your envirornment. She acts as an oracle that guides you through setting up containers. In addtiton she has built in intergrations with HomeAssitant & Jenkins (more coming soon).
+W.I.L.L.O.W (Workflow Intelligent Localized Learning & Optimized Worker) is an AI agent specifically designed to help you manage your environment. She acts as an oracle that guides you through setting up containers. In addtiton she has built in integratisons with Home Assistant & Jenkins (more coming soon).
 
  Read up here for full details: https://medium.com/@webdevmike01/introducing-w-i-l-l-o-w-827c3e965ef6
 
@@ -96,5 +96,5 @@ install this script and then headover to localhost:5174 or yourip:5174
 ---
 
 ## 🔒 **Security**
-- This Project is still early active developent. As of now this has meant for in home ussage.
+- This Project is still early active development. As of now this has meant for in home ussage.
 -  ⚠️ Please procced with caution of planning to use on a VPS and exposing your IP! ⚠️
