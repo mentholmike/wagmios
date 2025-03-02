@@ -47,9 +47,18 @@
                 <div class="text-white">
                   <h3 class="font-semibold">{{ container.name }}</h3>
                   <p class="text-sm text-gray-400">{{ container.image }}</p>
-                  <p class="text-sm" :class="{'text-green-400': container.status.includes('Up'), 'text-red-400': !container.status.includes('Up')}">
+                  <p class="text-sm font-medium" :class="{
+                    'text-green-400': isContainerRunning(container.status),
+                    'text-red-400': !isContainerRunning(container.status)
+                  }">
                     {{ container.status }}
                   </p>
+                  <div v-if="container.ports && container.ports.length > 0" class="flex flex-wrap gap-2 mt-2">
+                    <span v-for="(port, index) in container.ports" :key="index"
+                          class="px-2 py-1 bg-gray-600 rounded text-xs text-blue-300">
+                      {{ port.host }}:{{ port.container }}/{{ port.protocol || 'tcp' }}
+                    </span>
+                  </div>
                 </div>
               </div>
               
@@ -309,6 +318,20 @@
   const handleContainerCreated = () => {
     showAddModal.value = false
     // Refresh containers or other logic
+  }
+
+  // Add this new function to extract ports from status string
+  const extractPorts = (status: string): string[] => {
+    const portRegex = /\d{1,5}->\d{1,5}\/(?:tcp|udp)/g;
+    const matches = status.match(portRegex) || [];
+    return matches.map(port => port.replace('/tcp', '').replace('/udp', ''));
+  }
+
+  // Add this helper function to determine if a container is running
+  const isContainerRunning = (status: string): boolean => {
+    return status.toLowerCase().includes('running') || 
+           status.toLowerCase().includes('up') || 
+           status.toLowerCase().includes('healthy');
   }
   </script>
   
