@@ -11,7 +11,7 @@ https://wagmilabs.fun
 
 ---
 
-*** Small update: fixed an issue with the backend for gluetun! was only allowing 3 ports.*** 
+*** Bug Updates: - Fixed an issue with CPU not showing proper usage | Containers page now shows the ports each container is using *** 
 
 
 ## 📌 Table of Contents
@@ -78,6 +78,10 @@ install this script and then headover to localhost:5174 or yourip:5174
 
 
 <img width="1193" alt="Screenshot 2025-03-02 at 8 19 59 AM" src="https://github.com/user-attachments/assets/eab04aeb-7f66-41ba-8cbb-607ca44ed64a" />
+
+
+<img width="1203" alt="Screenshot 2025-03-02 at 8 51 16 AM" src="https://github.com/user-attachments/assets/f4bdb879-edb5-433f-9c13-7ebec3abb9a6" />
+
 
 
 ---
