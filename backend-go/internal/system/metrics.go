@@ -1,6 +1,7 @@
 package system
 
 import (
+	"io/ioutil"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -24,26 +25,34 @@ type SystemMetrics struct {
 func GetSystemMetrics() (*SystemMetrics, error) {
 	metrics := &SystemMetrics{}
 
-	// Get CPU usage
-	cmd := exec.Command("top", "-bn1")
-	output, err := cmd.CombinedOutput()
-	if err == nil {
-		lines := strings.Split(string(output), "\n")
-		for _, line := range lines {
-			if strings.Contains(line, "Cpu(s)") {
-				fields := strings.Fields(line)
-				for _, field := range fields {
-					if strings.HasSuffix(field, "id,") {
-						if idle, err := strconv.ParseFloat(strings.TrimSuffix(field, "id,"), 64); err == nil {
-							metrics.CPU = 100.0 - idle
-						}
-					}
-				}
+	// Read CPU usage from /proc/stat
+	statData, err := ioutil.ReadFile("/proc/stat")
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(statData), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "cpu ") {
+			fields := strings.Fields(line)[1:] // Skip "cpu" prefix
+			if len(fields) >= 4 {
+				user, _ := strconv.ParseFloat(fields[0], 64)
+				nice, _ := strconv.ParseFloat(fields[1], 64)
+				system, _ := strconv.ParseFloat(fields[2], 64)
+				idle, _ := strconv.ParseFloat(fields[3], 64)
+				
+				total := user + nice + system + idle
+				used := user + nice + system
+				
+				metrics.CPU = (used / total) * 100
 			}
 		}
 	}
 
 	// Get memory info
+	var cmd *exec.Cmd
+	var output []byte
+	
 	cmd = exec.Command("free", "-b")
 	output, err = cmd.CombinedOutput()
 	if err == nil {
