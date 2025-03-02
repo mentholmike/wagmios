@@ -73,14 +73,19 @@ install this script and then headover to localhost:5174 or yourip:5174
 
 
 ## 🐧 **Example**
-
-<img width="1431" alt="Screenshot 2025-02-22 at 5 47 46 PM" src="https://github.com/user-attachments/assets/794cf926-0d12-42e4-abfa-60e269795a0f" />
-
-
-<img width="1193" alt="Screenshot 2025-03-02 at 8 19 59 AM" src="https://github.com/user-attachments/assets/eab04aeb-7f66-41ba-8cbb-607ca44ed64a" />
+<img width="1194" alt="Screenshot 2025-03-02 at 9 25 38 AM" src="https://github.com/user-attachments/assets/ecd4f407-84ea-466c-a2ba-9fc128d048ba" />
 
 
-<img width="1203" alt="Screenshot 2025-03-02 at 8 51 16 AM" src="https://github.com/user-attachments/assets/f4bdb879-edb5-433f-9c13-7ebec3abb9a6" />
+<img width="1184" alt="Screenshot 2025-03-02 at 9 25 50 AM" src="https://github.com/user-attachments/assets/85be98e4-bba0-4dcb-9871-10bea3a4e350" />
+
+
+<img width="1173" alt="Screenshot 2025-03-02 at 9 26 16 AM" src="https://github.com/user-attachments/assets/8f814195-4b31-444d-a5eb-28c70dd4a5a3" />
+
+
+
+<img width="1200" alt="Screenshot 2025-03-02 at 9 27 36 AM" src="https://github.com/user-attachments/assets/b8f0524d-7f81-4c57-b0a1-24c57b24b579" />
+
+
 
 
 
