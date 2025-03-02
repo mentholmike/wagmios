@@ -149,6 +149,7 @@
   interface ContainerPort {
     host: string;
     container: string;
+    protocol?: string;
   }
   
   interface ContainerVolume {
