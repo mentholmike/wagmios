@@ -78,7 +78,7 @@
                 <!-- Action Buttons -->
                 <div class="flex gap-1">
                   <button
-                    v-if="!container.status.includes('Up')"
+                    v-if="!isContainerRunning(container.status)"
                     @click="handleContainerAction(container.ID, 'start')"
                     class="p-2 bg-gray-600 hover:bg-gray-500 text-green-400 rounded-lg"
                     title="Start Container"
@@ -89,7 +89,7 @@
                     </svg>
                   </button>
                   <button
-                    v-if="container.status.includes('Up')"
+                    v-if="isContainerRunning(container.status)"
                     @click="handleContainerAction(container.ID, 'stop')"
                     class="p-2 bg-gray-600 hover:bg-gray-500 text-yellow-400 rounded-lg"
                     title="Stop Container"
