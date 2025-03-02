@@ -77,7 +77,7 @@ install this script and then headover to localhost:5174 or yourip:5174
 <img width="1431" alt="Screenshot 2025-02-22 at 5 47 46 PM" src="https://github.com/user-attachments/assets/794cf926-0d12-42e4-abfa-60e269795a0f" />
 
 
-<img width="470" alt="Screenshot 2025-03-02 at 8 20 21 AM" src="https://github.com/user-attachments/assets/949192f7-0d09-4e7e-9926-13a2a5165471" />
+<img width="1193" alt="Screenshot 2025-03-02 at 8 19 59 AM" src="https://github.com/user-attachments/assets/eab04aeb-7f66-41ba-8cbb-607ca44ed64a" />
 
 
 ---
