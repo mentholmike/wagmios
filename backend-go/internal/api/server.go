@@ -253,45 +253,73 @@ func (s *Server) registerRoutes() {
 func (s *Server) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Container list endpoint hit: %s %s", r.Method, r.URL.Path)
 
-	// Test Docker connection first
-	testCmd := exec.Command("docker", "ps", "-a")
-	testOutput, testErr := testCmd.CombinedOutput()
-	log.Printf("Raw docker test output: %s", string(testOutput))
-	
-	if testErr != nil {
-		log.Printf("Error running docker ps: %v", testErr)
+	// Use docker inspect to get detailed container information including ports
+	cmd := exec.Command("docker", "ps", "-a", "--format", "{{.ID}}")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("Error getting container IDs: %v", err)
 		http.Error(w, "Failed to list containers", http.StatusInternalServerError)
 		return
 	}
 
-	// Now try to list containers with JSON format
-	cmd := exec.Command("docker", "ps", "-a", "--format", `{"ID":"{{ .ID }}", "name":"{{ .Names }}", "image":"{{ .Image }}", "status":"{{ .Status }}"}`)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("Error getting containers with format: %v\nOutput: %s", err, string(output))
-		http.Error(w, "Failed to get containers", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("Raw docker formatted output: %s", string(output))
-	
-	// Split and parse output
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	containerIDs := strings.Split(strings.TrimSpace(string(output)), "\n")
 	containers := make([]map[string]interface{}, 0)
 
-	for _, line := range lines {
-		if line == "" {
+	for _, id := range containerIDs {
+		if id == "" {
 			continue
 		}
-		var container map[string]interface{}
-		if err := json.Unmarshal([]byte(line), &container); err != nil {
-			log.Printf("Error parsing container JSON: %v for line: %s", err, line)
+
+		inspectCmd := exec.Command("docker", "inspect", id)
+		inspectOutput, err := inspectCmd.CombinedOutput()
+		if err != nil {
+			log.Printf("Error inspecting container %s: %v", id, err)
 			continue
 		}
+
+		var inspectData []map[string]interface{}
+		if err := json.Unmarshal(inspectOutput, &inspectData); err != nil {
+			log.Printf("Error parsing inspect output for container %s: %v", id, err)
+			continue
+		}
+
+		if len(inspectData) == 0 {
+			continue
+		}
+
+		containerInfo := inspectData[0]
+		ports := []map[string]string{}
+
+		// Extract port mappings
+		if networkSettings, ok := containerInfo["NetworkSettings"].(map[string]interface{}); ok {
+			if portBindings, ok := networkSettings["Ports"].(map[string]interface{}); ok {
+				for containerPort, hostBindings := range portBindings {
+					if bindings, ok := hostBindings.([]interface{}); ok {
+						for _, binding := range bindings {
+							if bindMap, ok := binding.(map[string]interface{}); ok {
+								ports = append(ports, map[string]string{
+									"host":      bindMap["HostPort"].(string),
+									"container": strings.Split(containerPort, "/")[0],
+									"protocol":  strings.Split(containerPort, "/")[1],
+								})
+							}
+						}
+					}
+				}
+			}
+		}
+
+		container := map[string]interface{}{
+			"ID":     containerInfo["Id"].(string),
+			"name":   strings.TrimPrefix(containerInfo["Name"].(string), "/"),
+			"image":  containerInfo["Config"].(map[string]interface{})["Image"].(string),
+			"status": containerInfo["State"].(map[string]interface{})["Status"].(string),
+			"ports":  ports,
+		}
+
 		containers = append(containers, container)
 	}
 
-	log.Printf("Sending response with %d containers", len(containers))
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(containers)
 }
@@ -1010,3 +1038,4 @@ func (s *Server) handleSaveTemplate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Template saved successfully"))
 }
+
