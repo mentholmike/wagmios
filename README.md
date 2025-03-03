@@ -1,5 +1,5 @@
 
-# 🚀 WAGMIOS: Self-Hosted Container Management with AI  
+# 🚀 WAGMI:Self-Hosted Container Management with AI  
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/2e3e1dec-89a3-4414-b031-6672f761ed61" width="300" height="auto">
@@ -120,10 +120,4 @@ She acts as an **oracle**, guiding you through container setup and integrations.
 ⚠️ **If deploying on a VPS, be cautious of exposing your IP!**  
 
 ---
-
-🚀 **Contribute & Stay Updated!**  
-Pull requests and feature suggestions are welcome! Let’s build the **future of self-hosted AI-powered container management** together.  
-
----
-
 
