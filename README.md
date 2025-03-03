@@ -76,7 +76,8 @@ Step 3: cd into wagmios dir and run: ```sudo docker compose up -d```
 <img width="1431" alt="Screenshot 2025-02-22 at 5 47 46 PM" src="https://github.com/user-attachments/assets/794cf926-0d12-42e4-abfa-60e269795a0f" />
 
 
-<img width="1193" alt="Screenshot 2025-03-02 at 8 19 59 AM" src="https://github.com/user-attachments/assets/eab04aeb-7f66-41ba-8cbb-607ca44ed64a" />
+<img width="1178" alt="Screenshot 2025-03-03 at 4 55 42 PM" src="https://github.com/user-attachments/assets/7903dc46-f23c-42d9-b715-1411c3d14f41" />
+
 
 
 ---
