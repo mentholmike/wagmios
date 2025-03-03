@@ -1,21 +1,38 @@
 <template>
-    <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-gray-800 w-full max-w-7xl h-[90vh] rounded-xl flex flex-col overflow-hidden">
+    <div class="fixed inset-0 flex items-center justify-center z-50" :class="[
+      isDarkMode ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-400/30 backdrop-blur-sm'
+    ]">
+      <div :class="[
+        'w-full max-w-7xl h-[90vh] rounded-xl flex flex-col overflow-hidden shadow-xl',
+        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+      ]">
         <!-- Header -->
-        <div class="flex justify-between items-center p-6 flex-none border-b border-gray-700">
+        <div :class="[
+          'flex justify-between items-center p-6 flex-none border-b',
+          isDarkMode ? 'border-gray-700' : 'border-gray-300'
+        ]">
           <div class="flex items-center gap-4">
             <button 
               @click="$emit('close')" 
-              class="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/50"
+              :class="[
+                'p-2 transition-colors rounded-lg',
+                isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+              ]"
             >
               ← Back
             </button>
-            <h1 class="text-2xl font-bold text-white">Containers</h1>
+            <h1 :class="[
+              'text-2xl font-bold',
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            ]">Containers</h1>
           </div>
           <div class="flex gap-3">
             <button 
               @click="fetchContainers"
-              class="p-2 bg-gray-700/50 hover:bg-gray-600/50 rounded-xl text-gray-400 hover:text-white transition-colors"
+              :class="[
+                'p-2 rounded-xl transition-colors',
+                isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-400 hover:text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-900'
+              ]"
               title="Refresh containers"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,7 +41,10 @@
             </button>
             <button 
               @click="showAddModal = true"
-              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center gap-2 transition-colors"
+              :class="[
+                'px-4 py-2 text-white rounded-xl flex items-center gap-2 transition-colors',
+                'bg-blue-500 hover:bg-blue-600'
+              ]"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -35,21 +55,39 @@
         </div>
   
         <!-- Container List -->
-        <div class="flex-1 overflow-y-auto p-6">
-          <div v-if="loading" class="text-white">Loading containers...</div>
-          <div v-else-if="containers.length === 0" class="text-white">
+        <div :class="[
+          'flex-1 overflow-y-auto p-6',
+          isDarkMode ? '' : 'light-scrollbar'
+        ]">
+          <div v-if="loading" :class="isDarkMode ? 'text-white' : 'text-gray-900'">Loading containers...</div>
+          <div v-else-if="containers.length === 0" :class="isDarkMode ? 'text-white' : 'text-gray-900'">
             No containers found. Add a container or visit the Marketplace to install containers.
           </div>
           <div v-else class="grid gap-4">
             <div v-for="container in containers" :key="container.ID" 
-                 class="bg-gray-700/50 p-4 rounded-xl flex items-center justify-between">
+                 :class="[
+                   'p-4 rounded-xl flex items-center justify-between',
+                   isDarkMode ? 'bg-gray-700/50' : 'bg-gray-200/70'
+                 ]">
               <div class="flex items-center gap-4">
-                <div class="text-white">
+                <div :class="isDarkMode ? 'text-white' : 'text-gray-900'">
                   <h3 class="font-semibold">{{ container.name }}</h3>
-                  <p class="text-sm text-gray-400">{{ container.image }}</p>
-                  <p class="text-sm" :class="{'text-green-400': container.status.includes('Up'), 'text-red-400': !container.status.includes('Up')}">
+                  <p :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">{{ container.image }}</p>
+                  <p class="text-sm font-medium" :class="{
+                    'text-green-400': isContainerRunning(container.status),
+                    'text-red-400': !isContainerRunning(container.status)
+                  }">
                     {{ container.status }}
                   </p>
+                  <div v-if="container.ports && container.ports.length > 0" class="flex flex-wrap gap-2 mt-2">
+                    <span v-for="(port, index) in container.ports" :key="index"
+                          :class="[
+                            'px-2 py-1 rounded text-xs',
+                            isDarkMode ? 'bg-gray-600 text-blue-300' : 'bg-gray-300 text-blue-700'
+                          ]">
+                      {{ port.host }}:{{ port.container }}/{{ port.protocol || 'tcp' }}
+                    </span>
+                  </div>
                 </div>
               </div>
               
@@ -58,7 +96,10 @@
                 <!-- Edit Button -->
                 <button
                   @click="editContainer(container)"
-                  class="p-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg"
+                  :class="[
+                    'p-2 rounded-lg',
+                    isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                  ]"
                   title="Edit Container"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,9 +110,12 @@
                 <!-- Action Buttons -->
                 <div class="flex gap-1">
                   <button
-                    v-if="!container.status.includes('Up')"
+                    v-if="!isContainerRunning(container.status)"
                     @click="handleContainerAction(container.ID, 'start')"
-                    class="p-2 bg-gray-600 hover:bg-gray-500 text-green-400 rounded-lg"
+                    :class="[
+                      'p-2 rounded-lg text-green-400',
+                      isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400'
+                    ]"
                     title="Start Container"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,9 +124,12 @@
                     </svg>
                   </button>
                   <button
-                    v-if="container.status.includes('Up')"
+                    v-if="isContainerRunning(container.status)"
                     @click="handleContainerAction(container.ID, 'stop')"
-                    class="p-2 bg-gray-600 hover:bg-gray-500 text-yellow-400 rounded-lg"
+                    :class="[
+                      'p-2 rounded-lg text-red-500',
+                      isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400'
+                    ]"
                     title="Stop Container"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +139,10 @@
                   </button>
                   <button
                     @click="handleContainerAction(container.ID, 'restart')"
-                    class="p-2 bg-gray-600 hover:bg-gray-500 text-blue-400 rounded-lg"
+                    :class="[
+                      'p-2 rounded-lg text-blue-400',
+                      isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400'
+                    ]"
                     title="Restart Container"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +151,10 @@
                   </button>
                   <button
                     @click="handleContainerAction(container.ID, 'delete')"
-                    class="p-2 bg-gray-600 hover:bg-gray-500 text-red-400 rounded-lg"
+                    :class="[
+                      'p-2 rounded-lg text-red-400',
+                      isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-300 hover:bg-gray-400'
+                    ]"
                     title="Delete Container"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,6 +173,7 @@
         v-if="showNewContainerModal || showEditContainerModal"
         :is-edit="showEditContainerModal"
         :container="selectedContainer"
+        :isDarkMode="isDarkMode"
         @close="closeModal"
         @submit="handleContainerSubmit"
       />
@@ -127,6 +181,7 @@
       <!-- Add Container Modal -->
       <ContainerModal 
         v-if="showAddModal"
+        :isDarkMode="isDarkMode"
         @close="handleModalClose"
         @created="handleContainerCreated"
       />
@@ -134,12 +189,13 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, onMounted, onUnmounted } from 'vue'
+  import { ref, onMounted, onUnmounted, inject } from 'vue'
   import ContainerModal from './ContainerModal.vue'
   
   interface ContainerPort {
     host: string;
     container: string;
+    protocol?: string;
   }
   
   interface ContainerVolume {
@@ -169,6 +225,9 @@
   const showEditContainerModal = ref(false)
   const selectedContainer = ref<Container | null>(null)
   const showAddModal = ref(false)
+  
+  // Get theme from parent component
+  const isDarkMode = inject('isDarkMode', ref(true))
   
   const getApiBaseUrl = () => {
     const hostname = window.location.hostname
@@ -310,10 +369,24 @@
     showAddModal.value = false
     // Refresh containers or other logic
   }
+
+  // Add this new function to extract ports from status string
+  const extractPorts = (status: string): string[] => {
+    const portRegex = /\d{1,5}->\d{1,5}\/(?:tcp|udp)/g;
+    const matches = status.match(portRegex) || [];
+    return matches.map(port => port.replace('/tcp', '').replace('/udp', ''));
+  }
+
+  // Add this helper function to determine if a container is running
+  const isContainerRunning = (status: string): boolean => {
+    return status.toLowerCase().includes('running') || 
+           status.toLowerCase().includes('up') || 
+           status.toLowerCase().includes('healthy');
+  }
   </script>
   
   <style scoped>
-  /* Custom scrollbar styling */
+  /* Custom scrollbar styling for dark mode */
   .overflow-y-auto {
     scrollbar-width: thin;
     scrollbar-color: #4B5563 #1F2937;
@@ -335,5 +408,29 @@
   
   .overflow-y-auto::-webkit-scrollbar-thumb:hover {
     background-color: #6B7280;
+  }
+
+  /* Light mode scrollbar */
+  .light-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 #F1F5F9;
+  }
+  
+  .light-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .light-scrollbar::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 4px;
+  }
+  
+  .light-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #CBD5E1;
+    border-radius: 4px;
+  }
+  
+  .light-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94A3B8;
   }
   </style>

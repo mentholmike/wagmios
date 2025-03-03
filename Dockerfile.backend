@@ -1,0 +1,38 @@
+FROM golang:1.18.3-alpine
+
+WORKDIR /app
+
+# Install required system dependencies
+RUN apk add --no-cache git docker-cli
+
+# Create backend directory structure
+RUN mkdir -p pkg/handlers cmd/server internal/api internal/system data/logos templates
+
+# Create go.mod file
+RUN go mod init wagmios
+
+# Add required dependencies
+RUN go get github.com/gorilla/mux@v1.8.1 && \
+    go get github.com/rs/cors@v1.11.1 && \
+    go get github.com/joho/godotenv@v1.5.1 && \
+    go get github.com/lib/pq@v1.10.9 && \
+    go get github.com/go-redis/redis/v8@v8.11.5
+
+# Copy the application code
+COPY backend-go/ ./
+
+# Modify the chat.go file to use environment variable for WILLOW URL
+RUN if [ -f pkg/handlers/chat.go ]; then \
+    sed -i 's|"http://localhost:5678/webhook/wagmios-chat"|os.Getenv("WILLOW_URL") + "/webhook/wagmios-chat"|g' pkg/handlers/chat.go && \
+    sed -i '1,10s|import (|import (\n    "os"|' pkg/handlers/chat.go; \
+    fi
+
+# Build the application
+RUN go mod tidy && \
+    go build -o main ./cmd/server/main.go
+
+# Expose the port
+EXPOSE 8080
+
+# Command to run the app
+CMD ["./main"]

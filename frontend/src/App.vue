@@ -1,63 +1,119 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-white">
-    <Background3D />
-    <div class="container mx-auto px-4 py-12">
+  <div class="min-h-screen" :class="isDarkMode ? 'bg-gray-900 text-white' : 'bg-cream text-gray-900'">
+    <Background3D v-if="isDarkMode" />
+    <LightBackground3D v-else />
+    
+    <!-- Theme Toggle Slider (Global) -->
+    <div class="fixed top-6 right-6 z-50">
+      <div 
+        :class="[
+          'flex items-center p-2.5 rounded-full transition-all duration-300 shadow-lg backdrop-blur-sm',
+          isDarkMode ? 'bg-gray-800/60 hover:bg-gray-800/80' : 'bg-white/70 hover:bg-white/90'
+        ]"
+      >
+        <span class="text-lg mr-2" :class="isDarkMode ? 'text-gray-500' : 'text-yellow-500'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </span>
+        
+        <label class="relative inline-block w-12 h-6 mx-1">
+          <input 
+            type="checkbox" 
+            class="opacity-0 w-0 h-0" 
+            :checked="isDarkMode"
+            @change="toggleTheme"
+          >
+          <span 
+            :class="[
+              'slider absolute cursor-pointer top-0 left-0 right-0 bottom-0 rounded-full transition-all duration-300',
+              isDarkMode ? 'bg-blue-600' : 'bg-gray-300'
+            ]"
+          ></span>
+        </label>
+        
+        <span class="text-lg ml-2" :class="isDarkMode ? 'text-blue-400' : 'text-gray-500'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </span>
+      </div>
+    </div>
+    
+    <div class="container mx-auto px-4 py-20">
       <!-- Metrics Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
         <!-- CPU -->
-        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+        <div :class="[
+          'backdrop-blur-xl rounded-xl p-6 shadow-lg',
+          isDarkMode ? 'bg-gray-800/50' : 'bg-light-modal/80'
+        ]">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-gray-400 text-sm">CPU Usage</h3>
+            <h3 :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">CPU Usage</h3>
             <span class="text-xs text-blue-400">Real-time</span>
           </div>
-          <div class="text-3xl font-bold text-white mb-2">
-            {{ systemMetrics.cpu.toFixed(1) }}%
+          <div :class="isDarkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
+            {{ displayCpuUsage() }}
           </div>
-          <div class="w-full bg-gray-700 rounded-full h-2">
+          <div :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-300'" class="w-full rounded-full h-2">
             <div 
               class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              :style="{ width: `${Math.min(systemMetrics.cpu, 100)}%` }"
+              :style="{ width: `${Math.min(getCpuUsage(), 100)}%` }"
             ></div>
           </div>
         </div>
 
         <!-- Memory -->
-        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+        <div :class="[
+          'backdrop-blur-xl rounded-xl p-6 shadow-lg',
+          isDarkMode ? 'bg-gray-800/50' : 'bg-light-modal/80'
+        ]">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-gray-400 text-sm">Memory Usage</h3>
+            <h3 :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">Memory Usage</h3>
             <span class="text-xs text-green-400">
               {{ formatBytes(systemMetrics.memory.total) }}
             </span>
           </div>
-          <div class="text-3xl font-bold text-white mb-2">
-            {{ ((systemMetrics.memory.used / systemMetrics.memory.total) * 100).toFixed(1) }}%
+          <div :class="isDarkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
+            {{ displayMemoryUsage() }}
           </div>
-          <div class="text-sm text-gray-400 mb-2">
+          <div :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mb-2">
             {{ formatBytes(systemMetrics.memory.used) }} used
           </div>
-          <div class="w-full bg-gray-700 rounded-full h-2">
+          <div :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-300'" class="w-full rounded-full h-2">
             <div 
               class="bg-green-600 h-2 rounded-full transition-all duration-300"
-              :style="{ width: `${(systemMetrics.memory.used / systemMetrics.memory.total) * 100}%` }"
+              :style="{ width: `${getMemoryPercentage()}%` }"
             ></div>
           </div>
         </div>
 
         <!-- Disk -->
-        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+        <div :class="[
+          'backdrop-blur-xl rounded-xl p-6 shadow-lg',
+          isDarkMode ? 'bg-gray-800/50' : 'bg-light-modal/80'
+        ]">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-gray-400 text-sm">Disk Usage</h3>
+            <h3 :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">Disk Usage</h3>
             <span class="text-xs text-purple-400">
               {{ formatBytes(systemMetrics.disk.total) }}
             </span>
           </div>
-          <div class="text-3xl font-bold text-white mb-2">
+          <div :class="isDarkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
             {{ ((systemMetrics.disk.used / systemMetrics.disk.total) * 100).toFixed(1) }}%
           </div>
-          <div class="text-sm text-gray-400 mb-2">
+          <div :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mb-2">
             {{ formatBytes(systemMetrics.disk.used) }} used
           </div>
-          <div class="w-full bg-gray-700 rounded-full h-2">
+          <div :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-300'" class="w-full rounded-full h-2">
             <div 
               class="bg-purple-600 h-2 rounded-full transition-all duration-300"
               :style="{ width: `${(systemMetrics.disk.used / systemMetrics.disk.total) * 100}%` }"
@@ -66,15 +122,18 @@
         </div>
 
         <!-- System Time (Replacing WILLOW Status) -->
-        <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg">
+        <div :class="[
+          'backdrop-blur-xl rounded-xl p-6 shadow-lg',
+          isDarkMode ? 'bg-gray-800/50' : 'bg-light-modal/80'
+        ]">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-gray-400 text-sm">System Time</h3>
+            <h3 :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">System Time</h3>
             <span class="text-xs text-purple-400">Live</span>
           </div>
-          <div class="text-3xl font-bold mb-2">
+          <div :class="isDarkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
             <span class="gradient-text">{{ formatTime(systemMetrics.currentTime) }}</span>
           </div>
-          <div class="text-sm text-gray-400">
+          <div :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
             {{ formatDate(systemMetrics.currentTime) }}
           </div>
         </div>
@@ -84,68 +143,174 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
         <!-- Custom Links -->
         <template v-for="(link, index) in customLinks" :key="index">
-          <div class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300 relative">
+          <div 
+            :class="[
+              'card relative backdrop-blur-xl rounded-xl p-6 shadow-lg transition-all duration-300',
+              isDarkMode 
+                ? 'bg-gray-800/70 hover:bg-gray-700/80 hover:shadow-xl hover:-translate-y-1' 
+                : 'bg-white/90 hover:bg-white hover:shadow-xl hover:-translate-y-1 border border-gray-200/50'
+            ]"
+            @click="openPopup(link.url, link.title, 800, 600)"
+          >
+            <!-- Delete Button -->
             <button 
-              @click.stop="deleteCustomLink(index)"
-              class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
+              @click.stop="deleteCustomLink(index)" 
+              :class="[
+                'delete-btn absolute top-3 right-3 p-1.5 rounded-full transition-colors',
+                isDarkMode 
+                  ? 'bg-gray-700 hover:bg-red-500/80 text-gray-400 hover:text-white' 
+                  : 'bg-gray-100 hover:bg-red-500 text-gray-500 hover:text-white'
+              ]"
+              title="Delete link"
             >
-              ✕
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <div 
-              @click="openPopup(link.url, link.title, 800, 600)"
-              class="w-full h-full"
-            >
-              <div class="flex items-center justify-center space-x-4">
-                <div class="text-4xl">{{ link.emoji || '🔗' }}</div>
-                <div class="text-xl font-bold text-white">{{ link.title }}</div>
-              </div>
-              <div class="text-center mt-4 text-gray-400">
-                Click to open {{ link.title }}
-              </div>
+            
+            <div class="flex flex-col items-center justify-center h-full">
+              <div class="text-4xl mb-4">{{ link.emoji }}</div>
+              <div :class="[
+                'text-center font-medium',
+                isDarkMode ? 'text-white' : 'text-gray-800'
+              ]">{{ link.title }}</div>
             </div>
           </div>
         </template>
 
         <!-- Add New Link Button -->
         <div 
-          class="bg-gray-800/50 backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer hover:bg-gray-800/70 transition-all duration-300"
+          :class="[
+            'backdrop-blur-xl rounded-xl p-6 shadow-lg cursor-pointer transition-all duration-300',
+            isDarkMode 
+              ? 'bg-gray-800 hover:bg-gray-800/70' 
+              : 'bg-light-modal hover:bg-gray-200/80'
+          ]"
           @click="showAddLinkModal = true"
         >
           <div class="flex items-center justify-center h-full">
-            <div class="text-4xl text-gray-400 hover:text-white transition-colors">➕</div>
+            <div :class="[
+              'text-4xl transition-colors',
+              isDarkMode ? 'text-white hover:text-white' : 'text-gray-900 hover:text-gray-900'
+            ]">➕</div>
           </div>
         </div>
       </div>
 
       <!-- Add Link Modal -->
-      <div v-if="showAddLinkModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-gray-800 rounded-xl p-6 w-96 shadow-2xl emoji-picker">
-          <h3 class="text-xl font-bold text-white mb-4">Add New Link</h3>
-          <form @submit.prevent="addCustomLink">
-            <div class="mb-4">
-              <label class="block text-gray-400 mb-2">Icon</label>
-              <div class="relative">
-                <button 
-                  type="button"
-                  @click="showEmojiPicker = !showEmojiPicker"
-                  class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <span class="text-2xl">{{ newLink.emoji || '🔗' }}</span>
-                  <span class="text-gray-400">▼</span>
-                </button>
+      <div v-if="showAddLinkModal" class="fixed inset-0 flex items-center justify-center z-50" :class="[
+        isDarkMode ? 'bg-gray-900/80 backdrop-blur-sm' : 'bg-gray-200/80 backdrop-blur-sm'
+      ]">
+        <div :class="[
+          'rounded-xl p-6 w-96 shadow-2xl emoji-picker',
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        ]">
+          <h3 :class="[
+            'text-xl font-bold mb-4',
+            isDarkMode ? 'text-white' : 'text-gray-800'
+          ]">Add Custom Link</h3>
+          
+          <div class="mb-4">
+            <label :class="[
+              'block mb-2 text-sm font-medium',
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            ]">Title</label>
+            <input 
+              v-model="newLink.title" 
+              type="text" 
+              :class="[
+                'w-full px-4 py-2 rounded-lg',
+                isDarkMode 
+                  ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500 focus:ring-blue-500' 
+                  : 'bg-gray-50 text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              ]"
+              placeholder="My Link"
+            />
+          </div>
+          
+          <div class="mb-4">
+            <label :class="[
+              'block mb-2 text-sm font-medium',
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            ]">URL</label>
+            <input 
+              v-model="newLink.url" 
+              type="url" 
+              :class="[
+                'w-full px-4 py-2 rounded-lg',
+                isDarkMode 
+                  ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500 focus:ring-blue-500' 
+                  : 'bg-gray-50 text-gray-900 border border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              ]"
+              placeholder="https://example.com"
+            />
+          </div>
+          
+          <div class="mb-6">
+            <label :class="[
+              'block mb-2 text-sm font-medium',
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            ]">Emoji</label>
+            
+            <!-- Emoji Dropdown Button -->
+            <div class="relative emoji-dropdown">
+              <button 
+                type="button"
+                @click="showEmojiPicker = !showEmojiPicker"
+                :class="[
+                  'w-full flex items-center justify-between px-4 py-3 rounded-lg',
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white border border-gray-600 hover:border-gray-500' 
+                    : 'bg-gray-50 text-gray-900 border border-gray-300 hover:border-gray-400'
+                ]"
+              >
+                <div class="flex items-center">
+                  <span class="text-2xl mr-3">{{ newLink.emoji }}</span>
+                  <span>{{ showEmojiPicker ? 'Close' : 'Select an emoji' }}</span>
+                </div>
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <!-- Emoji Dropdown Menu -->
+              <div 
+                v-show="showEmojiPicker" 
+                :class="[
+                  'absolute z-10 w-full mt-2 rounded-lg shadow-lg',
+                  isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'
+                ]"
+              >
+                <!-- Category Tabs -->
+                <div class="flex p-2 overflow-x-auto scrollbar-thin border-b" :class="isDarkMode ? 'border-gray-700' : 'border-gray-200'">
+                  <button 
+                    v-for="(category, index) in emojiCategories" 
+                    :key="index"
+                    @click="activeEmojiCategory = index"
+                    :class="[
+                      'px-3 py-1.5 text-sm rounded-lg mr-2 whitespace-nowrap transition-colors',
+                      activeEmojiCategory === index 
+                        ? (isDarkMode ? 'bg-gray-600 text-white' : 'bg-blue-100 text-blue-800') 
+                        : (isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+                    ]"
+                  >
+                    {{ category.icon }} {{ category.name }}
+                  </button>
+                </div>
                 
-                <!-- Emoji Picker Dropdown -->
-                <div 
-                  v-if="showEmojiPicker"
-                  class="absolute top-full left-0 mt-2 w-full bg-gray-700 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto"
-                >
-                  <div class="grid grid-cols-6 gap-2 p-3">
-                    <button
-                      v-for="emoji in emojiList"
+                <!-- Emoji Grid -->
+                <div class="p-3 max-h-48 overflow-y-auto scrollbar-thin">
+                  <div class="grid grid-cols-8 gap-2">
+                    <button 
+                      v-for="emoji in currentCategoryEmojis" 
                       :key="emoji"
-                      type="button"
                       @click="selectEmoji(emoji)"
-                      class="text-2xl hover:bg-gray-600 p-2 rounded transition-colors cursor-pointer"
+                      :class="[
+                        'text-2xl p-2 rounded hover:scale-125 transition-transform',
+                        newLink.emoji === emoji 
+                          ? (isDarkMode ? 'bg-gray-600' : 'bg-blue-100') 
+                          : ''
+                      ]"
                     >
                       {{ emoji }}
                     </button>
@@ -153,43 +318,32 @@
                 </div>
               </div>
             </div>
-            
-            <div class="mb-4">
-              <label class="block text-gray-400 mb-2">Title</label>
-              <input 
-                v-model="newLink.title"
-                type="text"
-                class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter website title"
-                required
-              >
-            </div>
-            <div class="mb-6">
-              <label class="block text-gray-400 mb-2">URL</label>
-              <input 
-                v-model="newLink.url"
-                type="url"
-                class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://example.com"
-                required
-              >
-            </div>
-            <div class="flex justify-end space-x-4">
-              <button 
-                type="button"
-                @click="closeModal"
-                class="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Add Link
-              </button>
-            </div>
-          </form>
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button 
+              @click="closeModal"
+              :class="[
+                'px-4 py-2 rounded-lg',
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ]"
+            >
+              Cancel
+            </button>
+            <button 
+              @click="addCustomLink"
+              :class="[
+                'px-4 py-2 rounded-lg text-white',
+                isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600',
+                (!newLink.title || !isValidUrl(newLink.url)) ? 'opacity-50 cursor-not-allowed' : ''
+              ]"
+              :disabled="!newLink.title || !isValidUrl(newLink.url)"
+            >
+              Add
+            </button>
+          </div>
         </div>
       </div>
 
@@ -198,7 +352,10 @@
         <a 
           href="https://wagmilabs.fun"
           target="_blank" 
-          class="hover:text-white transition-colors flex items-center gap-2"
+          :class="[
+            'hover:text-white transition-colors flex items-center gap-2',
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          ]"
         >
           <span class="text-xl">👷</span>
           <span>Labs</span>
@@ -206,16 +363,22 @@
         <a 
           href="https://github.com/mentholmike/"
           target="_blank"
-          class="hover:text-white transition-colors flex items-center gap-2"
+          :class="[
+            'hover:text-white transition-colors flex items-center gap-2',
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          ]"
         >
           <span class="text-xl">🐙</span>
           <span>Github</span>
         </a>
       </div>
 
-      <!-- Dock -->
+      <!-- Redesigned Dock -->
       <div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div class="flex items-end gap-2 px-6 py-4 bg-gray-800/20 backdrop-blur-xl rounded-2xl shadow-2xl">
+        <div :class="[
+          'flex items-end gap-3 px-6 py-4 rounded-2xl shadow-xl transition-all duration-300',
+          isDarkMode ? 'bg-gray-800/80 backdrop-blur-xl' : 'bg-white/80 backdrop-blur-xl'
+        ]">
           <div 
             v-for="(item, index) in dockItems" 
             :key="index"
@@ -225,12 +388,20 @@
             @click="handleDockItemClick(item)"
           >
             <div
-              class="w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 text-4xl hover:bg-gray-700/20"
-              :class="{ 'scale-125': activeDockItem === index }"
+              :class="[
+                'w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 text-4xl',
+                activeDockItem === index ? 'scale-125' : '',
+                isDarkMode 
+                  ? 'hover:bg-gray-700/50' 
+                  : 'hover:bg-gray-100'
+              ]"
             >
               {{ item.emoji }}
             </div>
-            <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-gray-700 text-white rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+            <div :class="[
+              'absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none shadow-lg',
+              isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'
+            ]">
               {{ item.label }}
             </div>
           </div>
@@ -241,23 +412,26 @@
       <Marketplace 
         v-if="showMarketplace" 
         @close="showMarketplace = false"
+        :isDarkMode="isDarkMode"
       />
 
       <!-- Containers Modal -->
       <Containers 
         v-if="showContainers" 
         @close="showContainers = false"
+        :isDarkMode="isDarkMode"
       />
 
-      <!-- Add WillowChat before the closing div -->
-      <WillowChat />
+      <!-- WillowChat with updated styling -->
+      <WillowChat :isDarkMode="isDarkMode" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, provide, computed, watch, onBeforeUnmount } from 'vue'
 import Background3D from './components/Background3D.vue'
+import LightBackground3D from './components/LightBackground3D.vue'
 import Marketplace from './components/Marketplace.vue'
 import Containers from './components/Containers.vue'
 import WillowChat from './components/WillowChat.vue'
@@ -265,13 +439,22 @@ import { METRICS_API_URL, SYSTEM_API_URL } from './api'  // Import the API URLs
 
 // System metrics
 const systemMetrics = ref({
-  cpu: 0,
-  memory: { used: 0, total: 0 },
-  disk: { used: 0, total: 0 },
+  cpu: {
+    usage: 0
+  },
+  memory: {
+    total: 0,
+    used: 0,
+    usagePercent: 0
+  },
+  disk: {
+    total: 0,
+    used: 0
+  },
   uptime: 0,
+  currentTime: '',
   elizaStatus: false,
-  elizaVersion: '',
-  currentTime: ''
+  elizaVersion: ''
 })
 
 const activeDockItem = ref(-1)
@@ -473,25 +656,97 @@ const newLink = ref<CustomLink>({
   emoji: '🔗'
 })
 
-// Curated list of emojis for websites and apps
+// Expanded emoji list with categories
 const emojiList = [
-  '🌐', '🔗', '📱', '💻', '⭐', '🎮', '📺', '🎵', '📚', '📰',
-  '💬', '📝', '📈', '🎨', '🛠️', '⚙️', '📦', '🔍', '🎯', '📊',
-  '🏢', '🎬', '📷', '🎥', '💡', '🔔', '📫', '🗂️', '📁', '🔐',
-  '🌟', '💼', '🎪', '🎭', '🎧', '📡', '🔧', '📌', '🎲', '🎯',
-  '🚀', '⚡', '🔥', '💎', '🎪', '🎨', '🎬', '🎮', '📱', '💻'
-]
+  // Web & Tech
+  '🌐', '🔗', '📱', '💻', '⭐', '🎮', '📺', '🎵', '📚', '📰', '💬', '📝', '📈', '🎨', '🛠️', '⚙️', '📦', '🔍', '🎯', '📊',
+  // Business & Work
+  '🏢', '🏭', '🏦', '🏪', '🏫', '🏬', '🏨', '🏣', '🏥', '💼', '📁', '📂', '📋', '📌', '📎', '📏', '📐', '✂️', '🔒', '🔑',
+  // Media & Entertainment
+  '🎬', '📷', '🎥', '🎞️', '📽️', '🎭', '🎪', '🎨', '🎼', '🎧', '🎤', '🎹', '🎷', '🎺', '🎸', '🎻', '🎲', '🎯', '🎮', '🎰',
+  // Communication
+  '📞', '📟', '📠', '📧', '📨', '📩', '📤', '📥', '📮', '📢', '📣', '📡', '📠', '💬', '💭', '🗯️', '🔊', '🔈', '📲', '📳',
+  // Tools & Utilities
+  '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🔩', '⚙️', '🗜️', '⚖️', '🔗', '⛓️', '🧰', '🧲', '🧪', '🧫', '🧬', '🔬', '🔭', '📡', '💉',
+  // Weather & Nature
+  '☀️', '🌤️', '⛅', '🌥️', '☁️', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '🌬️', '💨', '🌪️', '🌫️', '🌊', '💧', '💦', '☔', '⚡',
+  // Food & Drink
+  '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🥑', '🍆', '🥔', '🥕',
+  // Travel & Places
+  '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🛵', '🏍️', '🚲', '🛴', '🚨', '🚥',
+  // Objects & Symbols
+  '💎', '🔮', '🧿', '🧸', '🎁', '🎀', '🎊', '🎉', '🎈', '🪄', '🪅', '🪆', '🧩', '🧶', '🧵', '🧮', '🧾', '🔖', '🔍', '🔎',
+  // Faces & People
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '☺️', '😚',
+  // Special
+  '🚀', '⚡', '🔥', '💯', '✨', '💫', '🌟', '⭐', '🌠', '🌌'
+];
+
+// Emoji categories
+const activeEmojiCategory = ref(0);
+
+const emojiCategories = [
+  { name: 'Frequently Used', icon: '⭐' },
+  { name: 'Web & Tech', icon: '🌐' },
+  { name: 'Business', icon: '💼' },
+  { name: 'Media', icon: '🎬' },
+  { name: 'Communication', icon: '💬' },
+  { name: 'Tools', icon: '🔧' },
+  { name: 'Weather', icon: '☀️' },
+  { name: 'Food', icon: '🍎' },
+  { name: 'Travel', icon: '🚗' },
+  { name: 'Objects', icon: '💎' },
+  { name: 'Faces', icon: '😀' },
+  { name: 'Special', icon: '✨' }
+];
+
+// Categorized emoji lists
+const categorizedEmojis = {
+  'Frequently Used': ['🔗', '🌐', '📱', '💻', '⭐', '🎮', '📺', '🎵', '📚', '📰', '💬', '📝', '🚀', '⚡', '🔥'],
+  'Web & Tech': ['🌐', '🔗', '📱', '💻', '⭐', '🎮', '📺', '🎵', '📚', '📰', '💬', '📝', '📈', '🎨', '🛠️', '⚙️', '📦', '🔍', '🎯', '📊'],
+  'Business': ['🏢', '🏭', '🏦', '🏪', '🏫', '🏬', '🏨', '🏣', '🏥', '💼', '📁', '📂', '📋', '📌', '📎', '📏', '📐', '✂️', '🔒', '🔑'],
+  'Media': ['🎬', '📷', '🎥', '🎞️', '📽️', '🎭', '🎪', '🎨', '🎼', '🎧', '🎤', '🎹', '🎷', '🎺', '🎸', '🎻', '🎲', '🎯', '🎮', '🎰'],
+  'Communication': ['📞', '📟', '📠', '📧', '📨', '📩', '📤', '📥', '📮', '📢', '📣', '📡', '📠', '💬', '💭', '🗯️', '🔊', '🔈', '📲', '📳'],
+  'Tools': ['🔧', '🔨', '⚒️', '🛠️', '⛏️', '🔩', '⚙️', '🗜️', '⚖️', '🔗', '⛓️', '🧰', '🧲', '🧪', '🧫', '🧬', '🔬', '🔭', '📡', '💉'],
+  'Weather': ['☀️', '🌤️', '⛅', '🌥️', '☁️', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '🌬️', '💨', '🌪️', '🌫️', '🌊', '💧', '💦', '☔', '⚡'],
+  'Food': ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🥑', '🍆', '🥔', '🥕'],
+  'Travel': ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🛵', '🏍️', '🚲', '🛴', '🚨', '🚥'],
+  'Objects': ['💎', '🔮', '🧿', '🧸', '🎁', '🎀', '🎊', '🎉', '🎈', '🪄', '🪅', '🪆', '🧩', '🧶', '🧵', '🧮', '🧾', '🔖', '🔍', '🔎'],
+  'Faces': ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '☺️', '😚'],
+  'Special': ['🚀', '⚡', '🔥', '💯', '✨', '💫', '🌟', '⭐', '🌠', '🌌']
+};
+
+// Computed property to get current category emojis
+const currentCategoryEmojis = computed(() => {
+  const categoryName = emojiCategories[activeEmojiCategory.value].name;
+  return categorizedEmojis[categoryName];
+});
+
+// Add this computed property
+const isValidLink = computed(() => {
+  return newLink.value.title.trim() !== '' && isValidUrl(newLink.value.url);
+});
+
+// Add this helper function if it doesn't exist
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 // Function to select emoji
 const selectEmoji = (emoji: string) => {
-  newLink.value.emoji = emoji
-  showEmojiPicker.value = false
+  newLink.value.emoji = emoji;
+  showEmojiPicker.value = false;
 }
 
 // Updated close modal function
 const closeModal = () => {
-  showAddLinkModal.value = false
-  showEmojiPicker.value = false
+  showAddLinkModal.value = false;
+  showEmojiPicker.value = false;
   newLink.value = {
     title: '',
     url: '',
@@ -548,15 +803,21 @@ const deleteCustomLink = (index: number) => {
   saveCustomLinks() // Save after deleting
 }
 
-// Click outside to close emoji picker
-onMounted(() => {
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement
-    if (!target.closest('.emoji-picker') && showEmojiPicker.value) {
-      showEmojiPicker.value = false
-    }
-  })
+// Add this to handle clicking outside the emoji picker
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (showEmojiPicker.value && !target.closest('.emoji-dropdown')) {
+    showEmojiPicker.value = false;
+  }
+}
 
+// Add this to your onMounted function
+onMounted(() => {
+  // Existing code...
+  
+  // Add event listener for clicking outside
+  document.addEventListener('click', handleClickOutside);
+  
   loadCustomLinks() // Load links when component mounts
   
   fetchMetrics()
@@ -572,12 +833,35 @@ onMounted(() => {
       loadCustomLinks() // Reload links if they change in another tab
     }
   })
+
+  // Add this watch to debug the metrics
+  watch(systemMetrics, (newMetrics) => {
+    if (newMetrics && newMetrics.memory) {
+      console.log('Memory metrics:', {
+        used: newMetrics.memory.used,
+        total: newMetrics.memory.total,
+        usagePercent: newMetrics.memory.usagePercent
+      });
+    }
+  }, { deep: true });
+
+  fetchSystemMetrics();
+  
+  // Poll for updates every 5 seconds
+  const intervalId = setInterval(fetchSystemMetrics, 5000);
+  
+  onBeforeUnmount(() => {
+    clearInterval(intervalId);
+  });
 })
 
 onUnmounted(() => {
   activePopups.value.forEach((popup) => {
     popup.window?.close()
   })
+  
+  // Remove event listener
+  document.removeEventListener('click', handleClickOutside);
 })
 
 const formatTime = (timeString: string) => {
@@ -601,6 +885,123 @@ const formatDate = (timeString: string) => {
     day: 'numeric'
   })
 }
+
+// Theme state
+const isDarkMode = ref(true) // Default to dark mode
+provide('isDarkMode', isDarkMode) // Provide to all components
+
+// Toggle theme function
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+}
+
+// Load theme preference from localStorage
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme) {
+    isDarkMode.value = savedTheme === 'dark'
+  }
+  
+  // Rest of your onMounted code...
+})
+
+// Add these methods to your component
+const displayMemoryUsage = () => {
+  if (!systemMetrics.value || !systemMetrics.value.memory) {
+    console.log('No memory metrics available');
+    return '0%';
+  }
+  
+  console.log('Memory metrics:', {
+    used: systemMetrics.value.memory.used,
+    total: systemMetrics.value.memory.total,
+    usagePercent: systemMetrics.value.memory.usagePercent
+  });
+  
+  // Use the backend-calculated percentage if available
+  if (typeof systemMetrics.value.memory.usagePercent === 'number') {
+    console.log(`Using backend percentage: ${systemMetrics.value.memory.usagePercent.toFixed(1)}%`);
+    return `${systemMetrics.value.memory.usagePercent.toFixed(1)}%`;
+  }
+  
+  // Fallback to calculation with safety checks
+  if (systemMetrics.value.memory.total > 0) {
+    const percent = (systemMetrics.value.memory.used / systemMetrics.value.memory.total) * 100;
+    const safePercent = Math.min(Math.max(percent, 0), 100);
+    console.log(`Calculated percentage: ${safePercent.toFixed(1)}%`);
+    return `${safePercent.toFixed(1)}%`;
+  }
+  
+  return '0%';
+}
+
+const getMemoryPercentage = () => {
+  // Use the backend-calculated percentage if available
+  if (systemMetrics.value && systemMetrics.value.memory && 
+      typeof systemMetrics.value.memory.usagePercent === 'number') {
+    return Math.min(Math.max(systemMetrics.value.memory.usagePercent, 0), 100);
+  }
+  
+  // Fallback to calculation with safety checks
+  if (systemMetrics.value && systemMetrics.value.memory && 
+      systemMetrics.value.memory.total > 0) {
+    const percent = (systemMetrics.value.memory.used / systemMetrics.value.memory.total) * 100;
+    return Math.min(Math.max(percent, 0), 100);
+  }
+  
+  return 0;
+}
+
+// Update the fetchSystemMetrics function
+const fetchSystemMetrics = async () => {
+  try {
+    console.log('Fetching metrics from:', METRICS_API_URL);
+    
+    const response = await fetch(METRICS_API_URL, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      mode: 'cors'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Raw system metrics from API:', data);
+    systemMetrics.value = data;
+  } catch (error) {
+    console.error('Error fetching system metrics:', error);
+  }
+};
+
+// Add this watch to debug the metrics
+watch(systemMetrics, (newMetrics) => {
+  if (newMetrics && newMetrics.memory) {
+    console.log('Memory metrics updated:', {
+      used: newMetrics.memory.used,
+      total: newMetrics.memory.total,
+      usagePercent: newMetrics.memory.usagePercent
+    });
+  }
+}, { deep: true });
+
+// Add these helper functions to safely access metrics
+const getCpuUsage = () => {
+  if (!systemMetrics.value || !systemMetrics.value.cpu || typeof systemMetrics.value.cpu.usage !== 'number') {
+    return 0;
+  }
+  return systemMetrics.value.cpu.usage;
+};
+
+const displayCpuUsage = () => {
+  const usage = getCpuUsage();
+  return usage.toFixed(1) + '%';
+};
 </script>
 
 <style>
@@ -708,5 +1109,88 @@ h1 {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Add these new theme variables */
+:root {
+  --color-cream: #FFF8EE;
+  --color-light-modal: #F7F4F2;
+}
+
+.bg-cream {
+  background-color: var(--color-cream);
+}
+
+.bg-light-modal {
+  background-color: var(--color-light-modal);
+}
+
+/* Add these styles to your <style> section */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.7);
+}
+
+/* Modern theme toggle slider styles */
+.slider {
+  position: relative;
+  transition: 0.4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+  background-color: #3B82F6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #3B82F6;
+}
+
+/* Remove the dots between slider */
+input + .slider:after {
+  content: none;
+}
+
+/* Add a subtle glow effect for dark mode */
+input:checked + .slider:before {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Add a subtle hover effect */
+.slider:hover:before {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+input:checked + .slider:hover:before {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.7);
 }
 </style>

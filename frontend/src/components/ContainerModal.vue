@@ -1,16 +1,30 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[9999]">
-    <div class="bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col m-4">
+  <div class="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[9999]" :class="[
+    isDarkMode ? 'bg-black bg-opacity-50' : 'bg-gray-500/30'
+  ]">
+    <div :class="[
+      'rounded-2xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col m-4',
+      isDarkMode ? 'bg-gray-800/95 backdrop-blur-xl' : 'bg-light-modal backdrop-blur-xl'
+    ]">
       <!-- Fixed Header -->
-      <div class="flex-none p-6 border-b border-gray-700">
+      <div :class="[
+        'flex-none p-6 border-b',
+        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+      ]">
         <div class="flex justify-between items-center">
-          <h3 class="text-xl font-semibold text-white">{{ isEdit ? 'Edit' : 'New' }} Container</h3>
+          <h3 :class="[
+            'text-xl font-semibold',
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          ]">{{ isEdit ? 'Edit' : 'New' }} Container</h3>
           <!-- Template Selection -->
           <div class="flex items-center gap-2">
             <select
               v-model="selectedTemplate"
               @change="onTemplateSelect"
-              class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-white"
+              :class="[
+                'border rounded-xl px-4 py-2',
+                isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+              ]"
             >
               <option value="">Select Template</option>
               <option v-for="template in templates" :key="template.name" :value="template.name">
@@ -24,15 +38,18 @@
           'text-green-400': statusType === 'success',
           'text-blue-400': statusType === 'info',
           'text-red-400': statusType === 'error'
-        }" class="text-sm mt-2">
+        }" class="mt-2">
           {{ statusMessage }}
         </div>
       </div>
 
       <form @submit.prevent="handleSubmit" class="flex flex-col flex-1 min-h-0">
         <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto min-h-0">
-          <div class="p-6 space-y-6">
+        <div :class="[
+          'flex-1 overflow-y-auto p-6',
+          isDarkMode ? '' : 'light-scrollbar'
+        ]">
+          <div class="space-y-6">
             <!-- Container Name -->
             <div>
               <label class="block text-sm font-medium text-gray-300">Container Name</label>
@@ -270,12 +287,18 @@
         </div>
 
         <!-- Fixed Footer -->
-        <div class="flex-none p-6 border-t border-gray-700">
+        <div :class="[
+          'flex-none p-6 border-t',
+          isDarkMode ? 'border-gray-700' : 'border-gray-200'
+        ]">
           <div class="flex justify-between items-center">
             <button
               type="button"
               @click="saveAsTemplate"
-              class="px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-500"
+              :class="[
+                'px-4 py-2 rounded-xl',
+                isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-gray-300 text-gray-800 hover:bg-gray-400'
+              ]"
             >
               Save as Template
             </button>
@@ -283,7 +306,10 @@
               <button
                 type="button"
                 @click="handleClose"
-                class="px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-500"
+                :class="[
+                  'px-4 py-2 rounded-xl',
+                  isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-gray-300 text-gray-800 hover:bg-gray-400'
+                ]"
               >
                 Cancel
               </button>
@@ -303,7 +329,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, inject } from 'vue'
 import { API_BASE_URL, TEMPLATES_API_URL, CONTAINERS_API_URL } from '../api'
 
 const emit = defineEmits<{
@@ -654,6 +680,9 @@ const saveAsTemplate = async () => {
     statusType.value = 'error'
   }
 }
+
+// Get theme from parent component
+const isDarkMode = inject('isDarkMode', ref(true))
 </script>
 
 <style scoped>

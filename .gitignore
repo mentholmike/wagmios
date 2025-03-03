@@ -1,4 +1,6 @@
+# Node modules
 node_modules/
-node_modules/
-node_modules/
-node_modules/
+
+# macOS specific files
+.DS_Store
+**/.DS_Store

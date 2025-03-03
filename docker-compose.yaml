@@ -1,6 +1,38 @@
-version: '3.8'
-
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: wagmios-frontend
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    networks:
+      - wagmios-network
+    restart: unless-stopped
+    volumes:
+      - frontend_data:/app/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: wagmios-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - backend_data:/app/data
+    environment:
+      - PORT=8080
+      - WILLOW_URL=http://willow:5678
+    networks:
+      - wagmios-network
+    restart: unless-stopped
+
   willow:
     image: n8nio/n8n
     container_name: willow
@@ -20,6 +52,8 @@ services:
       - willow_data:/home/node/.n8n
     depends_on:
       - postgres
+    networks:
+      - wagmios-network
 
   postgres:
     image: postgres:latest
@@ -33,7 +67,15 @@ services:
       - POSTGRES_DB=willow_memories
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wagmios-network
+
+networks:
+  wagmios-network:
+    driver: bridge
 
 volumes:
   willow_data:
-  postgres_data: 
+  postgres_data:
+  frontend_data:
+  backend_data: 

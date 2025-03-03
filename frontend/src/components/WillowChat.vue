@@ -3,11 +3,19 @@
     <!-- Floating Chat Button -->
     <button
       @click="toggleChat"
-      class="fixed bottom-8 right-8 z-50 w-14 h-14 bg-gray-800/50 backdrop-blur-xl rounded-2xl flex items-center justify-center hover:bg-gray-800/70 transition-all duration-300 shadow-lg hover:scale-105 border border-gray-700/50"
+      :class="[
+        'fixed bottom-8 right-8 z-50 w-14 h-14 backdrop-blur-xl rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-105 border',
+        isDarkMode 
+          ? 'bg-gray-800/50 hover:bg-gray-800/70 border-gray-700/50' 
+          : 'bg-white/90 hover:bg-white border-gray-200'
+      ]"
     >
       <div class="flex space-x-1.5">
         <div v-for="i in 3" :key="i" 
-          class="w-1 bg-purple-400/80 rounded-full transform transition-all duration-500 audio-wave glow-effect"
+          :class="[
+            'w-1 rounded-full transform transition-all duration-500 audio-wave',
+            isDarkMode ? 'bg-purple-400/80 glow-effect' : 'bg-blue-500/80'
+          ]"
           :style="{
             height: '24px',
             animationDelay: `${i * 0.15}s`
@@ -18,24 +26,42 @@
 
     <!-- Chat Modal -->
     <div v-if="isOpen" 
-      class="fixed bottom-24 right-8 w-96 h-[32rem] bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-700/50 transition-all duration-300 ease-out transform"
-      :class="isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'"
+      :class="[
+        'fixed bottom-24 right-8 w-96 h-[32rem] backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden border transition-all duration-300 ease-out transform',
+        isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
+        isDarkMode 
+          ? 'bg-gray-800/95 border-gray-700/50' 
+          : 'bg-white/95 border-gray-200'
+      ]"
     >
       <!-- Header -->
-      <div class="flex-none p-4 border-b border-gray-700/50">
+      <div :class="[
+        'flex-none p-4 border-b',
+        isDarkMode ? 'border-gray-700/50' : 'border-gray-200'
+      ]">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-            <h3 class="text-white font-medium">W.I.L.L.O.W</h3>
+            <div :class="[
+              'w-2 h-2 rounded-full animate-pulse',
+              isDarkMode ? 'bg-purple-500' : 'bg-blue-500'
+            ]"></div>
+            <h3 :class="isDarkMode ? 'text-white' : 'text-gray-800'" class="font-medium">W.I.L.L.O.W</h3>
           </div>
-          <button @click="toggleChat" class="text-gray-400 hover:text-white transition-colors">
+          <button 
+            @click="toggleChat" 
+            :class="isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'"
+            class="transition-colors"
+          >
             ✕
           </button>
         </div>
       </div>
 
       <!-- Chat Messages -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="chatContainer">
+      <div :class="[
+        'flex-1 overflow-y-auto p-4 space-y-4',
+        isDarkMode ? '' : 'light-scrollbar'
+      ]" ref="chatContainer">
         <div v-for="(message, index) in messages" :key="index"
           class="flex items-start space-x-3"
           :class="message.type === 'user' ? 'justify-end' : ''"
@@ -43,8 +69,8 @@
           <div :class="[
             'max-w-[80%] rounded-xl p-3',
             message.type === 'user' 
-              ? 'bg-purple-600/50 text-white ml-auto'
-              : 'bg-gray-700/50 text-gray-100'
+              ? (isDarkMode ? 'bg-purple-600/50 text-white' : 'bg-blue-500 text-white')
+              : (isDarkMode ? 'bg-gray-700/50 text-gray-100' : 'bg-gray-100 text-gray-800')
           ]">
             {{ message.content }}
           </div>
@@ -52,17 +78,28 @@
       </div>
 
       <!-- Input Area -->
-      <div class="flex-none p-4 border-t border-gray-700/50">
+      <div :class="[
+        'flex-none p-4 border-t',
+        isDarkMode ? 'border-gray-700/50' : 'border-gray-200'
+      ]">
         <form @submit.prevent="sendMessage" class="flex space-x-2">
           <input
             v-model="newMessage"
             type="text"
             placeholder="Ask W.I.L.L.O.W something..."
-            class="flex-1 bg-gray-700/50 rounded-xl px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            :class="[
+              'flex-1 rounded-xl px-4 py-2 focus:outline-none',
+              isDarkMode 
+                ? 'bg-gray-700/50 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500' 
+                : 'bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-400'
+            ]"
           >
           <button
             type="submit"
-            class="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2 transition-colors"
+            :class="[
+              'text-white rounded-xl px-4 py-2 transition-colors',
+              isDarkMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-500 hover:bg-blue-600'
+            ]"
           >
             Send
           </button>
@@ -73,8 +110,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, inject } from 'vue'
 import { CHAT_API_URL } from '../api'
+
+// Get theme from parent component
+const isDarkMode = inject('isDarkMode', ref(true))
 
 interface ChatMessage {
   type: 'user' | 'assistant'
@@ -84,14 +124,17 @@ interface ChatMessage {
 const isOpen = ref(false)
 const newMessage = ref('')
 const messages = ref<ChatMessage[]>([
-  { type: 'assistant', content: 'Hello! I am W.I.L.L.O.W, how can I help you today?' }
+  {
+    type: 'assistant',
+    content: 'Hello! I\'m W.I.L.L.O.W, your personal assistant. How can I help you today?'
+  }
 ])
 const chatContainer = ref<HTMLElement | null>(null)
 const isLoading = ref(false)
 
-// Generate a random session ID for this chat instance
-const sessionId = Math.random().toString(36).substring(7)
-const userId = 'anonymous-' + Math.random().toString(36).substring(7)
+// Add these constants for session and user IDs
+const sessionId = ref(`session-${Date.now()}`)
+const userId = ref(`user-${Math.random().toString(36).substring(2, 10)}`)
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value
@@ -110,53 +153,57 @@ const scrollToBottom = () => {
 
 const sendMessage = async () => {
   if (!newMessage.value.trim() || isLoading.value) return
-
-  const userMessage = newMessage.value
   
+  const userMessage = newMessage.value.trim()
+  newMessage.value = ''
+  
+  // Add user message to chat
   messages.value.push({
     type: 'user',
     content: userMessage
   })
-
-  newMessage.value = ''
+  
   isLoading.value = true
-
+  await nextTick()
+  scrollToBottom()
+  
   try {
-    const response = await fetch(CHAT_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: userMessage,
-        sessionId: sessionId,
-        userId: userId
-      })
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Server response:', errorText)
-      throw new Error('Failed to send message')
-    }
-
-    const data = await response.json()
-    console.log('Raw Willow response:', data)
-
-    // Handle array response
-    let responseData = Array.isArray(data) ? data[0] : data
-
-    // Handle different response formats
-    const responseText = responseData.output || responseData.response || responseData.message || responseData.text || responseData.content
-    if (!responseText) {
-        console.error('Unexpected response format:', responseData)
-        throw new Error('Invalid response format')
-    }
-
-    messages.value.push({
-        type: 'assistant',
-        content: responseText
-    })
+    setTimeout(async () => {
+      try {
+        const response = await fetch(CHAT_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            sessionId: sessionId.value,
+            userId: userId.value
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        messages.value.push({
+          type: 'assistant',
+          content: data.response || 'I didn\'t understand that. Could you try again?'
+        })
+      } catch (error) {
+        console.error('Error sending message:', error)
+        messages.value.push({
+          type: 'assistant',
+          content: 'Sorry, I encountered an error processing your message.'
+        })
+      } finally {
+        isLoading.value = false
+        await nextTick()
+        scrollToBottom()
+      }
+    }, 500)
   } catch (error) {
     console.error('Error sending message:', error)
     messages.value.push({
@@ -191,7 +238,7 @@ const sendMessage = async () => {
               0 0 30px rgba(167, 139, 250, 0.1);
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling for dark mode */
 .overflow-y-auto {
   scrollbar-width: thin;
   scrollbar-color: #4B5563 transparent;
@@ -208,5 +255,28 @@ const sendMessage = async () => {
 .overflow-y-auto::-webkit-scrollbar-thumb {
   background-color: #4B5563;
   border-radius: 2px;
+}
+
+/* Light mode scrollbar */
+.light-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+.light-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.light-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.light-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 2px;
+}
+
+.light-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
 }
 </style> 
