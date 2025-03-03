@@ -58,7 +58,7 @@ W.I.L.L.O.W (Workflow Intelligent Localized Learning & Optimized Worker) is an A
 
 ## ⚡ Installation
 
-Step 1: make sure your running docker! grab the version that suites your os here: https://docs.docker.com/engine/install/
+Step 1: make sure you're running docker! grab the version that suites your os here: https://docs.docker.com/engine/install/
 
 Step 2: download the repo: ```git clone https://github.com/mentholmike/wagmios.git``` 
 
