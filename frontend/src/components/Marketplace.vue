@@ -234,6 +234,9 @@ interface Container {
   popularity: number
   verified: boolean
   compose_file?: string
+  ports?: string[]
+  volumes?: string[]
+  env?: { name?: string; default?: string; value?: string }[]
 }
 
 const containers = ref<Container[]>([])
@@ -336,7 +339,10 @@ const fetchMarketplaceData = async () => {
       logo: item.logo || '',
       popularity: item.popularity || 0,
       verified: item.verified || false,
-      compose_file: item.compose_file || undefined
+      compose_file: item.compose_file || undefined,
+      ports: item.ports || [],
+      volumes: item.volumes || [],
+      env: item.env || []
     }))
     
     // Extract unique categories
@@ -376,33 +382,69 @@ const installContainer = async (container: Container) => {
     const port = '8080'
     const installUrl = `http://${hostname}:${port}/api/marketplace/install`
 
+    // Parse port mappings from the container data
+    const parsedPorts = container.ports ? container.ports.map(portStr => {
+      // Handle formats like "8080:80/tcp" or "8080:80"
+      const parts = portStr.split(':')
+      const containerPort = parts[1] ? parts[1].split('/')[0] : parts[0]
+      const hostPort = parts[0]
+      const protocol = portStr.includes('/') ? portStr.split('/')[1] : 'tcp'
+      
+      return {
+        host: hostPort,
+        container: containerPort,
+        protocol: protocol
+      }
+    }) : []
+
+    // Parse volume mappings
+    const parsedVolumes = container.volumes ? container.volumes.map(volumeStr => {
+      const parts = volumeStr.split(':')
+      return {
+        host: parts[0],
+        container: parts[1] || parts[0]
+      }
+    }) : []
+
+    // Parse environment variables
+    const parsedEnv = container.env ? container.env.map(env => {
+      return {
+        key: env.name || '',
+        value: env.default || env.value || ''
+      }
+    }) : []
+
+    console.log('Sending installation request with:', {
+      name: container.name,
+      image: container.image,
+      config: {
+        ports: parsedPorts,
+        volumes: parsedVolumes,
+        env: parsedEnv
+      }
+    });
+
     const response = await fetch(installUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        image: container.image,
         name: container.name,
-        compose_file: container.compose_file
+        image: container.image,
+        config: {
+          ports: parsedPorts,
+          volumes: parsedVolumes,
+          env: parsedEnv
+        }
       })
-    })
+    });
 
-    // Log the raw response for debugging
     const responseText = await response.text();
     console.log('Raw server response:', responseText);
 
     if (!response.ok) {
       throw new Error(`Installation failed: ${responseText || response.statusText}`);
-    }
-
-    // Try to parse the response as JSON
-    let jsonResponse;
-    try {
-      jsonResponse = JSON.parse(responseText);
-    } catch (e) {
-      console.error('Failed to parse server response:', e);
-      throw new Error('Invalid server response');
     }
 
     notification.value = {
