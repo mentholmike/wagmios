@@ -7,14 +7,9 @@
 
 ---
 
-## 🔗 Live Demo & Documentation  
+## 👷‍♂️ Building
 🌐 [os.wagmilabs.fun](https://os.wagmilabs.fun)  
 🌐 [wagmilabs.fun](https://wagmilabs.fun)  
-
----
-
-## 📢 Latest Update  
-**Fix:** Resolved an issue with the backend for **Gluetun**, which previously allowed only 3 ports.
 
 ---
 
