@@ -1,5 +1,4 @@
-
-# 🚀 WAGMI:Self-Hosted Container Management with AI  
+# 🚀 WAGMI: Self-Hosted Container Management with AI  
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/2e3e1dec-89a3-4414-b031-6672f761ed61" width="300" height="auto">
@@ -7,14 +6,14 @@
 
 ---
 
-## 👷‍♂️ Building
+## 👷‍♂️ Building  
 🌐 [os.wagmilabs.fun](https://os.wagmilabs.fun)  
 🌐 [wagmilabs.fun](https://wagmilabs.fun)  
 
 ---
 
 ## 📌 Table of Contents  
-- [📖 Introduction](#-introduction)  
+- [📚 Introduction](#-introduction)  
 - [✨ Features](#-features)  
 - [💬 W.I.L.L.O.W](#-willow)  
 - [⚡ Installation](#-installation)  
@@ -25,14 +24,13 @@
 
 ---
 
-## 📖 Introduction  
+## 📚 Introduction  
 **WAGMIOS** is a **self-hosted container management system** with **AI-powered automation**.  
 It enables you to efficiently manage your containers with **W.I.L.L.O.W**, an AI assistant that optimizes your workflow.
 
 ---
 
 ## ✨ Features  
-
 - ✅ **Fully Self-Hosted** – Manage everything on your own infrastructure  
 - ✅ **Customizable Homepage** – Bookmark your favorite sites  
 - ✅ **Docker Marketplace & UI** – Easily browse, install, and manage containers  
@@ -74,19 +72,18 @@ She acts as an **oracle**, guiding you through container setup and integrations.
    sudo docker compose up -d
    ```
 
-## 👷‍♂️ Alternative Build Using Docker Hub
+## 👷‍♂️ Alternative Build Using Docker Hub  
 
-perfer using docker hub?
+Prefer using Docker Hub?
 
- 1️⃣ **Pull the Image**
+1️⃣ **Pull the Image**
 
-``` sh 
+```sh
 docker pull itzmizzle/wagmi:latest
-
 ```
 
-2️⃣ **Create the Yaml File** 
-``` sh
+2️⃣ **Create the Yaml File**  
+```yaml
 version: '3.8'
 
 services:
@@ -167,10 +164,10 @@ volumes:
   backend_data:
 ```
 
-3️⃣ **Run Docker Compose**
+3️⃣ **Run Docker Compose**  
 
-``` sh
-sudo docker compose up -d 
+```sh
+sudo docker compose up -d
 ```
 
 ---
