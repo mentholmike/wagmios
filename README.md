@@ -74,6 +74,105 @@ She acts as an **oracle**, guiding you through container setup and integrations.
    sudo docker compose up -d
    ```
 
+## 👷‍♂️ Alternative Build Using Docker Hub
+
+perfer using docker hub?
+
+ 1️⃣ **Pull the Image**
+
+``` sh 
+docker pull itzmizzle/wagmi:latest
+
+```
+
+2️⃣ **Create the Yaml File** 
+``` sh
+version: '3.8'
+
+services:
+  frontend:
+    image: itzmizzle/wagmi:frontend-latest
+    container_name: wagmios-frontend
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    networks:
+      - wagmios-network
+    restart: unless-stopped
+    volumes:
+      - frontend_data:/app/data
+
+  backend:
+    image: itzmizzle/wagmi:backend-latest
+    container_name: wagmios-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - backend_data:/app/data
+    environment:
+      - PORT=8080
+      - WILLOW_URL=http://willow:5678
+    networks:
+      - wagmios-network
+
+  willow:
+    image: n8nio/n8n
+    container_name: willow
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_SECURE_COOKIE=false
+      - N8N_DEFAULT_WORKFLOW_STATE=active
+      - N8N_LOG_LEVEL=info
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_DATABASE=willow_memories
+      - DB_POSTGRESDB_USER=willow
+      - DB_POSTGRESDB_PASSWORD=wagmios
+    volumes:
+      - willow_data:/home/node/.n8n
+    depends_on:
+      - postgres
+    networks:
+      - wagmios-network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    ports:
+      - "5443:5432"
+    environment:
+      - POSTGRES_USER=willow
+      - POSTGRES_PASSWORD=wagmios
+      - POSTGRES_DB=willow_memories
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wagmios-network
+
+networks:
+  wagmios-network:
+    driver: bridge
+
+volumes:
+  willow_data:
+  postgres_data:
+  frontend_data:
+  backend_data:
+```
+
+3️⃣ **Run Docker Compose**
+
+``` sh
+sudo docker compose up -d 
+```
+
 ---
 
 ## 🐧 Examples  
