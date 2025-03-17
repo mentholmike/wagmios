@@ -95,7 +95,7 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=http://localhost:5179
     networks:
       - wagmios-network
     restart: unless-stopped
@@ -106,7 +106,7 @@ services:
     image: itzmizzle/wagmi:backend-latest
     container_name: wagmios-backend
     ports:
-      - "8080:8080"
+      - "5179:5179"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - backend_data:/app/data
