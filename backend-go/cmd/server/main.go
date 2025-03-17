@@ -12,7 +12,7 @@ func main() {
 	// Get port from environment variable or use default
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "5179"
 	}
 
 	// Create and start the server

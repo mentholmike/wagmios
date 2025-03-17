@@ -530,7 +530,7 @@ onMounted(async () => {
 
 const fetchTemplates = async () => {
   try {
-    const apiUrl = `http://${window.location.hostname}:8080/api/containers/templates`
+    const apiUrl = `http://${window.location.hostname}:5179/api/containers/templates`
     console.log('Fetching templates from:', apiUrl)
     const response = await fetch(apiUrl)
     if (!response.ok) {
@@ -558,7 +558,7 @@ const onTemplateSelect = async () => {
         ? selectedTemplate.value 
         : `${selectedTemplate.value}.json`
       
-      const apiUrl = `http://${window.location.hostname}:8080/api/containers/templates/${encodeURIComponent(templateName)}`
+      const apiUrl = `http://${window.location.hostname}:5179/api/containers/templates/${encodeURIComponent(templateName)}`
       console.log('Loading template from:', apiUrl)
       
       const response = await fetch(apiUrl)
@@ -647,7 +647,7 @@ const saveAsTemplate = async () => {
       devices: form.value.devices
     }
 
-    const apiUrl = `http://${window.location.hostname}:8080/api/containers/templates`
+    const apiUrl = `http://${window.location.hostname}:5179/api/containers/templates`
     console.log('Template data to save:', templateData)
     statusMessage.value = 'Saving template...'
     statusType.value = 'info'

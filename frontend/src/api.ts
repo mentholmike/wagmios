@@ -3,8 +3,8 @@ export const getApiBaseUrl = () => {
   // Get the current hostname
   const hostname = window.location.hostname;
   
-  // Use the backend port from environment or default to 8080
-  const backendPort = import.meta.env?.VITE_BACKEND_PORT || '8080';
+  // Use the backend port from environment or default to 5179
+  const backendPort = import.meta.env?.VITE_BACKEND_PORT || '5179';
   
   // Use the same protocol as the current page
   const protocol = window.location.protocol;

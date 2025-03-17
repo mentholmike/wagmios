@@ -231,7 +231,7 @@
   
   const getApiBaseUrl = () => {
     const hostname = window.location.hostname
-    const port = '8080'
+    const port = '5179'
     return `http://${hostname}:${port}/api/containers`  // Keep containers suffix for this component
   }
   

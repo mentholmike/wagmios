@@ -399,33 +399,63 @@ func (s *Server) handleInstallContainer(w http.ResponseWriter, r *http.Request) 
 
 	// Add configuration
 	// Add ports
-	if ports, ok := req.Config["ports"].([]interface{}); ok {
-		for _, port := range ports {
-			if portStr, ok := port.(string); ok {
-				args = append(args, "-p", portStr)
-				log.Printf("Adding port mapping: %s", portStr)
+	if portsInterface, ok := req.Config["ports"]; ok {
+		if ports, ok := portsInterface.([]interface{}); ok {
+			for _, portInterface := range ports {
+				if portMap, ok := portInterface.(map[string]interface{}); ok {
+					host, hostOk := portMap["host"].(string)
+					container, containerOk := portMap["container"].(string)
+					protocol, _ := portMap["protocol"].(string)
+					
+					if hostOk && containerOk {
+						portMapping := fmt.Sprintf("%s:%s", host, container)
+						if protocol == "udp" {
+							portMapping += "/udp"
+						} else if protocol == "both" {
+							// For both TCP and UDP, add two port mappings
+							args = append(args, "-p", portMapping+"/tcp")
+							args = append(args, "-p", portMapping+"/udp")
+							continue
+						}
+						args = append(args, "-p", portMapping)
+						log.Printf("Adding port mapping: %s", portMapping)
+					}
+				}
 			}
 		}
 	}
 
 	// Add volumes
-	if volumes, ok := req.Config["volumes"].([]interface{}); ok {
-		for _, volume := range volumes {
-			if volumeStr, ok := volume.(string); ok {
-				args = append(args, "-v", volumeStr)
-				log.Printf("Adding volume mapping: %s", volumeStr)
+	if volumesInterface, ok := req.Config["volumes"]; ok {
+		if volumes, ok := volumesInterface.([]interface{}); ok {
+			for _, volumeInterface := range volumes {
+				if volumeMap, ok := volumeInterface.(map[string]interface{}); ok {
+					host, hostOk := volumeMap["host"].(string)
+					container, containerOk := volumeMap["container"].(string)
+					
+					if hostOk && containerOk {
+						volumeMapping := fmt.Sprintf("%s:%s", host, container)
+						args = append(args, "-v", volumeMapping)
+						log.Printf("Adding volume mapping: %s", volumeMapping)
+					}
+				}
 			}
 		}
 	}
 
 	// Add environment variables
-	if env, ok := req.Config["env"].([]interface{}); ok {
-		for _, e := range env {
-			if envMap, ok := e.(map[string]interface{}); ok {
-				name := envMap["name"].(string)
-				if value, ok := envMap["default"].(string); ok {
-					args = append(args, "-e", fmt.Sprintf("%s=%s", name, value))
-					log.Printf("Adding env variable: %s", name)
+	if envInterface, ok := req.Config["env"]; ok {
+		if env, ok := envInterface.([]interface{}); ok {
+			for _, envInterface := range env {
+				if envMap, ok := envInterface.(map[string]interface{}); ok {
+					key, keyOk := envMap["key"].(string)
+					value, valueOk := envMap["value"].(string)
+					
+					if keyOk && valueOk && key != "" {
+						envVar := fmt.Sprintf("%s=%s", key, value)
+						args = append(args, "-e", envVar)
+						log.Printf("Adding env variable: %s", envVar)
+					}
 				}
 			}
 		}

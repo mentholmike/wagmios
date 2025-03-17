@@ -25,7 +25,7 @@ export default defineConfig({
     host: '0.0.0.0',  // This allows external access
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:5179',
         changeOrigin: true,
         secure: false
       }

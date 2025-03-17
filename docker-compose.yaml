@@ -9,7 +9,7 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=http://localhost:5179
     networks:
       - wagmios-network
     restart: unless-stopped
@@ -22,12 +22,12 @@ services:
       dockerfile: Dockerfile.backend
     container_name: wagmios-backend
     ports:
-      - "8080:8080"
+      - "5179:5179"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - backend_data:/app/data
     environment:
-      - PORT=8080
+      - PORT=5179
       - WILLOW_URL=http://willow:5678
     networks:
       - wagmios-network
