@@ -77,8 +77,8 @@
               </label>
             </div>
 
-            <div :class="['p-2.5 rounded-lg text-xs', isDarkMode ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400']">
-              🔒 Dangerous operations (delete containers, write secrets) always require human approval via the API, even when enabled.
+            <div :class="['p-3 rounded-lg text-xs border', isDarkMode ? 'bg-amber-900/20 border-amber-800 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-700']">
+              ⚠️ <strong>Important:</strong> Scope changes require deleting your API key and starting over. To change scopes later, go to Settings → delete your key and volume, then run the Setup Wizard again.
             </div>
           </div>
 
@@ -174,12 +174,13 @@ const keyLabel = ref('')
 const scopeGroups = ref([
   { group: 'containers:read', description: 'List and inspect containers, view logs and configs', enabled: true },
   { group: 'containers:write', description: 'Create, start, stop, and restart containers', enabled: true },
-  { group: 'containers:delete', description: 'Delete containers', enabled: false },
+  { group: 'containers:delete', description: 'Delete containers (user must confirm each deletion)', enabled: false },
   { group: 'images:read', description: 'List downloaded Docker images', enabled: true },
   { group: 'images:write', description: 'Pull and delete images', enabled: true },
   { group: 'templates:read', description: 'Use saved container templates', enabled: true },
+  { group: 'templates:write', description: 'Create and edit container templates', enabled: false },
   { group: 'marketplace:read', description: 'Browse the app marketplace', enabled: true },
-  { group: 'marketplace:write', description: 'Install and manage marketplace apps', enabled: false },
+  { group: 'marketplace:write', description: 'Install and manage marketplace apps', enabled: true },
 ])
 
 const enabledScopes = computed(() =>
