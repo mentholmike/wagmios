@@ -1,6 +1,6 @@
 ---
 name: wagmios
-description: Give your OpenClaw agent a homelab. Use when managing Docker containers, installing marketplace apps, or any Docker-related tasks on behalf of the user. Scope-based API key permissions — agent can only do what the key allows. On Linux, Docker requires sudo — without root access, WAGMIOS is the only safe interface for agent homelab control. Requires X-API-Key header on every request. Includes Docker installation check and startup validation.
+description: Give your OpenClaw agent a homelab. Use when managing Docker containers, installing marketplace apps, or any Docker-related tasks on behalf of the user. Scope-based API key permissions — agent can only do what the key allows. On Linux, Docker requires sudo — without root access, WAGMIOS is the only safe interface for agent homelab control. Requires X-API-Key header on every request (user provides at runtime). Includes Docker installation check and startup validation.
 ---
 
 # WAGMIOS
@@ -37,7 +37,7 @@ Agent: GET /api/system/info or check Docker availability
 
 ## Authentication
 
-Every request requires the `X-API-Key` header. The user provides the key and base URL.
+Every request requires the `X-API-Key` header. The user provides the key and base URL at runtime — do not store it.
 
 ```
 Base URL: http://localhost:5179 (user provides)
@@ -45,6 +45,11 @@ Header:   X-API-Key: <key>
 ```
 
 Check key scopes first via `GET /api/auth/status` — this tells you what the key can do.
+
+**Credential handling:**
+- Keys are provided by the user at runtime, not stored by the agent
+- The API key is scoped — it only allows what the user explicitly granted
+- Do not log or expose the full key value
 
 ---
 

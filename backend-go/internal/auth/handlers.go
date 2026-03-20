@@ -33,9 +33,8 @@ func RegisterAuthHandlers(r *mux.Router, ks *KeyStore) {
 	r.HandleFunc("/api/auth/verify", handleVerify(ks)).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/auth/status", handleStatus(ks)).Methods("GET", "OPTIONS")
 
-	// Settings endpoints (auth required)
-	// Scope management — update key permissions anytime
-	r.HandleFunc("/api/settings/scopes", handleUpdateScopes(ks)).Methods("POST", "OPTIONS")
+	// Settings endpoints — require auth + self-scope-escalation check
+	r.HandleFunc("/api/settings/scopes", requireAuth(ks, handleUpdateScopes(ks))).Methods("POST", "OPTIONS")
 }
 
 // handleSetup creates the first API key (first boot only)
@@ -176,13 +175,30 @@ func handleGetSettings(ks *KeyStore) http.HandlerFunc {
 
 // ---- Scope management ----
 
-func handleUpdateScopes(ks *KeyStore) http.HandlerFunc {
+// requireAuth wraps a handler to require authentication and pass key meta
+func requireAuth(ks *KeyStore, handler func(w http.ResponseWriter, r *http.Request, meta *KeyMeta)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+		apiKey := r.Header.Get("X-API-Key")
+		if apiKey == "" {
+			writeError(w, http.StatusUnauthorized, "API_KEY_REQUIRED", "X-API-Key header required")
+			return
+		}
+		meta, err := ks.ValidateKey(apiKey)
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "INVALID_KEY", "Invalid or expired API key")
+			return
+		}
+		handler(w, r, meta)
+	}
+}
 
+// handleUpdateScopes updates the key's scopes. Agents can only reduce their own scopes, not escalate.
+func handleUpdateScopes(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, meta *KeyMeta) {
+	return func(w http.ResponseWriter, r *http.Request, meta *KeyMeta) {
 		var req struct {
 			Scopes []Scope `json:"scopes"`
 		}
@@ -194,6 +210,19 @@ func handleUpdateScopes(ks *KeyStore) http.HandlerFunc {
 		if len(req.Scopes) == 0 {
 			writeError(w, http.StatusBadRequest, "SCOPES_REQUIRED", "At least one scope is required")
 			return
+		}
+
+		// Self-scope-escalation check: new scopes must be a subset of current scopes.
+		// Agents cannot give themselves new permissions — only reduce or maintain.
+		currentScopes := make(map[Scope]bool)
+		for _, s := range meta.Scopes {
+			currentScopes[s] = true
+		}
+		for _, s := range req.Scopes {
+			if !currentScopes[s] {
+				writeError(w, http.StatusForbidden, "SCOPE_ESCALATION", "Agents cannot add scopes beyond what the key currently has")
+				return
+			}
 		}
 
 		if err := ks.UpdateScopes(req.Scopes); err != nil {

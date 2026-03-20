@@ -22,11 +22,11 @@ Any attempt to delete these returns `PROTECTED`.
 ### 3. No API Key Manipulation
 The agent cannot:
 - Create, regenerate, or delete API keys
-- Change its own permissions or scopes
+- Add scopes beyond what the key currently has
 - Access the `wagmios` key data files directly
 - Manipulate the key store in any way
 
-Scope changes are **user-only actions** via the Settings UI.
+**Scope changes:** The agent can reduce its own scopes via `POST /api/settings/scopes`, but cannot add scopes — the API enforces that new scopes must be a subset of current scopes. Adding scopes is always a user action.
 
 ### 4. Filesystem Confinement
 The agent can only interact with:

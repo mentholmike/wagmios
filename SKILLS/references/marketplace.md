@@ -131,6 +131,6 @@ Body: { "app_id": "jellyfin", "container_name": "my-jellyfin", "compose_path": "
 ## Notes
 
 - Marketplace apps use Docker Compose under the hood
-- Apps are stored in `${HOME}/.wagmios/containers/`
+- Apps are stored in `/app/data/containers/` inside the container (mapped to `${HOME}/.wagmios/containers/` on the host via the docker-compose volume mount)
 - App data persists in named Docker volumes
 - Each install gets a unique directory with timestamp suffix
