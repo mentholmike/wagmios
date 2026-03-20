@@ -1,7 +1,6 @@
 services:
   frontend:
     image: itzmizzle/wagmi:frontend-latest
-    platform: linux/amd64
     container_name: wagmios-frontend
     ports:
       - "5174:5174"
@@ -20,7 +19,6 @@ services:
 
   backend:
     image: itzmizzle/wagmi:backend-latest
-    platform: linux/amd64
     container_name: wagmios-backend
     ports:
       - "5179:5179"
