@@ -64,15 +64,15 @@ Every WAGMIOS API key has **scopes** — granular permissions that control exact
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Your API Key Scopes                                       │
+│  Your API Key Scopes                                        │
 ├─────────────────────────────────────────────────────────────┤
 │  ✅ containers:read     → list containers, view logs        │
 │  ✅ containers:write    → start, stop, create containers    │
-│  ✅ containers:delete  → remove containers                   │
-│  ✅ images:read        → list Docker images                │
+│  ✅ containers:delete  → remove containers                  │
+│  ✅ images:read        → list Docker images                 │
 │  ✅ images:write       → pull and delete images             │
-│  ✅ marketplace:read  → browse the app marketplace        │
-│  ✅ marketplace:write → install and manage apps            │
+│  ✅ marketplace:read  → browse the app marketplace          │
+│  ✅ marketplace:write → install and manage apps             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -313,5 +313,5 @@ MIT License — do what you want with it.
 </p>
 
 <p align="center">
-  <em>Docker management for humans. Built with 🏠 for homelabs everywhere.</em>
+  <em>🤖 🤝 🦞</em>
 </p>
