@@ -24,22 +24,29 @@
 
 ## 🏃 Quick Start
 
-### 1. Get Docker
+### Option 1 — Pull from Docker Hub (Recommended)
 
-Make sure Docker is installed and running on your machine. [Install Docker Desktop](https://docs.docker.com/desktop/) if you're on Mac or Windows.
+No build step. Images are pre-built for both x86_64 and ARM64.
 
 ```bash
-docker --version
-docker ps  # should show an empty list, not an error
+# Download docker-compose.yaml
+curl -O https://raw.githubusercontent.com/mentholmike/wagmios/main/docker-compose.yaml
+
+# Start everything
+docker compose up -d
 ```
 
-### 2. Pull & Run
+### Option 2 — Build from Source
+
+Clone the repo and build locally with Docker.
 
 ```bash
 git clone https://github.com/mentholmike/wagmios.git
 cd wagmios
-docker compose up -d
+docker compose up -d --build
 ```
+
+> **Note:** Building from source requires Docker on your machine. On ARM64 (Apple Silicon, ARM Linux) no extra setup is needed — the images build for both architectures automatically.
 
 ### 3. Open the UI
 
@@ -208,6 +215,8 @@ Transmission, qBittorrent, Nextcloud, Filebrowser, Minecraft, n8n, RSSHub, and m
 
 ## 🐳 Docker Management
 
+### Start / Stop
+
 ```bash
 # Start
 docker compose up -d
@@ -215,13 +224,25 @@ docker compose up -d
 # Stop
 docker compose down
 
-# Rebuild after updates
-docker compose build
-docker compose up -d
-
 # View logs
 docker compose logs -f backend
 docker compose logs -f frontend
+```
+
+### Updating
+
+**If you used Option 1 (Docker Hub):**
+```bash
+docker compose down
+docker compose pull
+docker compose up -d
+```
+
+**If you built from source:**
+```bash
+docker compose down
+docker compose pull  # fetch latest Hub images
+docker compose up -d --build
 ```
 
 ### Data Persistence
