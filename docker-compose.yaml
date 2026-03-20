@@ -1,0 +1,52 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: wagmios-frontend
+    ports:
+      - "5174:5174"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://wagmios-backend:5179
+      - VITE_WS_URL=ws://wagmios-backend:5179
+      - VITE_BACKEND_PORT=5179
+    networks:
+      - wagmios-network
+    restart: unless-stopped
+    volumes:
+      - frontend_data:/app/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: wagmios-backend
+    ports:
+      - "5179:5179"
+    volumes:
+      - wagmios_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.wagmios/containers:/app/data/containers
+    environment:
+      - PORT=5179
+      - WAGMIOS_DATA_DIR=/app/data
+    networks:
+      - wagmios-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5179/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+networks:
+  wagmios-network:
+    driver: bridge
+
+volumes:
+  frontend_data:
+  wagmios_data:

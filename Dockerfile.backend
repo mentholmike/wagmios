@@ -1,0 +1,39 @@
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Copy source
+COPY backend-go/ ./
+
+# Initialize go module and fetch dependencies
+RUN go mod init wagmios && \
+    go get github.com/gorilla/mux@v1.8.1 && \
+    go get github.com/rs/cors@v1.11.1 && \
+    go get github.com/google/uuid@v1.6.0 && \
+    go get github.com/gorilla/websocket@v1.5.1 && \
+    go get gopkg.in/yaml.v3@v3.0.1
+
+# Build
+RUN go build -o wagmios ./cmd/server/
+
+# Runtime stage
+FROM alpine:3.19
+
+RUN apk add --no-cache docker-cli docker-cli-compose ca-certificates
+
+WORKDIR /app
+
+# Data directories
+RUN mkdir -p /app/data/keys /app/data/templates /app/data/activity /app/data/logos
+
+COPY --from=builder /app/wagmios .
+
+ENV WAGMIOS_DATA_DIR=/app/data
+ENV PORT=5179
+
+EXPOSE 5179
+
+CMD ["./wagmios"]
