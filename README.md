@@ -17,7 +17,7 @@
 - **🚀 One-Click Apps** — Install 34+ self-hosted apps from the [WAGMIOS Marketplace](https://marketplace.wagmilabs.fun) in seconds. Plex, Jellyfin, Ollama, Home Assistant, and more.
 - **🐳 Container Management** — List, create, start, stop, restart, and delete containers through a clean REST API.
 - **🔐 Scope-Based Permissions** — Give AI agents exactly the permissions they need. Nothing blanket. If the key doesn't have `containers:delete`, the agent can't delete anything.
-- **🛡️ Agent-Safe by Design** — Agents interact with Docker **only** through the API. No CLI, no socket access, no workarounds.
+- **🛡️ Agent Transparency** — Agents interact with Docker through the API. The WAGMIOS skill makes every action visible and auditable, so users can see exactly what agents are doing with their homelab.
 - **⚡ Real-Time Activity** — WebSocket-powered activity feed shows you everything happening in your homelab.
 
 ---
@@ -102,8 +102,8 @@ Agent: *deletes the container* → "Done. Container deleted."
 - Monitor your homelab's status
 - Pull Docker images
 
-**What agents CANNOT do:**
-- Access Docker directly (no CLI, no socket)
+**What agents should only do through WAGMIOS:**
+- Access Docker (the skill makes every action visible and auditable)
 - Escalate their own permissions
 - Delete system containers (wagmios-backend, wagmios-frontend)
 - Read/write files outside the containers directory
