@@ -1,6 +1,6 @@
 ---
 name: wagmios
-description: Docker container management and marketplace for self-hosted apps. Use when managing Docker containers, installing marketplace apps, or any Docker-related tasks. Scope-based API key permissions — agent can only do what the key allows. Never attempt workarounds, direct docker commands, or actions outside the API. Requires X-API-Key header on every request. Includes Docker installation check and startup validation.
+description: Give your OpenClaw agent a homelab. Use when managing Docker containers, installing marketplace apps, or any Docker-related tasks on behalf of the user. Scope-based API key permissions — agent can only do what the key allows. On Linux, Docker requires sudo — without root access, WAGMIOS is the only safe interface for agent homelab control. Requires X-API-Key header on every request. Includes Docker installation check and startup validation.
 ---
 
 # WAGMIOS
@@ -9,10 +9,9 @@ description: Docker container management and marketplace for self-hosted apps. U
 
 ## Core Principle
 
-The WAGMIOS API is the **only interface** for container management. Do not:
+The WAGMIOS API is the **primary interface** for container management. On Linux, Docker requires sudo — without root access, WAGMIOS is the only interface agents can use for homelab control. Do not:
 - Execute `docker` CLI commands directly
 - Access the Docker socket or daemon
-- Read/write files outside the API
 - Manipulate API keys or scopes
 - Bypass scope restrictions through any means
 

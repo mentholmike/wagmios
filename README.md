@@ -1,12 +1,12 @@
 # <img src="logo/removed-background.png" height="48" align="middle" /> WAGMIOS
 
-### Docker container management for humans (and their agents)
+### Give your agent a homelab
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed.svg?logo=docker)](https://www.docker.com/)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg?logo=go)](https://golang.org/)
 
-**WAGMIOS** is a self-hosted Docker management platform with an API-first design. Control your containers, install self-hosted apps from a marketplace, and give AI agents exactly the permissions you want — nothing more.
+**WAGMIOS** is a self-hosted Docker management platform built native for **OpenClaw agents**. Give your agent a scoped API key and it can manage your homelab — install apps, start/stop containers, pull images — with every action visible and auditable. Scope = permission. No sudo, no daemon access, just the exact access you grant.
 
 > **Think of it as your homelab's command center.** Built for folks who want the power of Docker without memorizing every CLI flag.
 
@@ -17,7 +17,7 @@
 - **🚀 One-Click Apps** — Install 34+ self-hosted apps from the [WAGMIOS Marketplace](https://marketplace.wagmilabs.fun) in seconds. Plex, Jellyfin, Ollama, Home Assistant, and more.
 - **🐳 Container Management** — List, create, start, stop, restart, and delete containers through a clean REST API.
 - **🔐 Scope-Based Permissions** — Give AI agents exactly the permissions they need. Nothing blanket. If the key doesn't have `containers:delete`, the agent can't delete anything.
-- **🛡️ Agent Transparency** — Agents interact with Docker through the API. The WAGMIOS skill makes every action visible and auditable, so users can see exactly what agents are doing with their homelab.
+- **🤖 OpenClaw-Native** — Built for OpenClaw agents. Every action is visible and auditable.
 - **⚡ Real-Time Activity** — WebSocket-powered activity feed shows you everything happening in your homelab.
 
 ---

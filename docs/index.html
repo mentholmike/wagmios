@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WAGMIOS Wiki — Docker Management for Humans</title>
+  <title>WAGMIOS Wiki — Give your agent a homelab</title>
   <link rel="icon" type="image/png" href="logo/removed-background.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,7 +93,7 @@
       background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 60%);
     }
     
-    .hero img.logo { height: 80px; margin-bottom: 24px; }
+    .hero img.logo { height: 120px; margin-bottom: 24px; }
     
     .hero h1 {
       font-size: 48px;
@@ -416,8 +416,8 @@
 
 <section class="hero">
   <img src="logo/removed-background.png" alt="WAGMIOS" class="logo">
-  <h1>Docker Management<br>for Humans</h1>
-  <p>Self-hosted container management with scope-based permissions, a one-click app marketplace, and agent-safe API design.</p>
+  <h1>Give Your Agent<br>a Homelab</h1>
+  <p>Self-hosted Docker management with scope-based permissions, one-click app installs, and OpenClaw-native agent control. Give your AI agent exactly what it needs — nothing more.</p>
   <div class="cta">
     <a href="https://github.com/mentholmike/wagmios" class="btn btn-primary">GitHub</a>
     <a href="https://marketplace.wagmilabs.fun" class="btn btn-outline">Marketplace ↗</a>
@@ -441,7 +441,7 @@
 
   <section id="what">
     <h2>What is WAGMIOS?</h2>
-    <p>WAGMIOS is a self-hosted Docker management platform with an API-first design. It gives you a clean REST API to manage containers, install self-hosted apps from a marketplace, and — most importantly — control exactly what AI agents can do with your homelab.</p>
+    <p>WAGMIOS is a self-hosted Docker management platform built native for <strong>OpenClaw agents</strong>. Give your agent a scoped API key and it can manage your homelab — install apps, start/stop containers, pull images — with every action visible and auditable. Scope = permission. No sudo, no daemon access, just the exact access you grant.</p>
     
     <div class="cards">
       <div class="card">
@@ -456,8 +456,8 @@
       </div>
       <div class="card">
         <div class="emoji">🤖</div>
-        <h4>Agent-Safe Design</h4>
-        <p>Agents interact with Docker only through the API. No workarounds.</p>
+        <h4>OpenClaw-Native</h4>
+        <p>Built for OpenClaw agents — every action is visible and auditable.</p>
       </div>
       <div class="card">
         <div class="emoji">⚡</div>
@@ -644,27 +644,18 @@ POST   /api/marketplace/start        → Start app (scope: marketplace:write)</c
 
   <section id="agents">
     <h2>For AI Agents</h2>
-    <p>WAGMIOS is designed to be controlled by AI agents. The agent skill at <code>skills/wagmi/</code> provides the full context for safe agent operation.</p>
+    <p>WAGMIOS is designed to be controlled by AI agents running on <strong>OpenClaw</strong>. The agent skill at <code>skills/wagmi/</code> provides the full context for agent operation.</p>
     
     <div class="callout">
-      <p>🤖 <strong>API only.</strong> Agents interact with Docker <em>only</em> through the WAGMIOS API. No direct docker CLI, no socket access, no workarounds.</p>
+      <p>🤖 <strong>The safety rail:</strong> On Linux, Docker commands require sudo. Without root access, your OpenClaw agent can only interact with your homelab through the WAGMIOS API — using exactly the scoped permissions you grant.</p>
     </div>
     
-    <h3>What Agents Can Do</h3>
+    <h3>What Agents Can Do (with the right scopes)</h3>
     <ul>
       <li>Install and manage apps from the marketplace</li>
       <li>Start/stop containers based on user requests</li>
       <li>Monitor homelab status via metrics</li>
       <li>Pull Docker images</li>
-    </ul>
-    
-    <h3>What Agents Cannot Do</h3>
-    <ul>
-      <li>Execute direct shell commands on the host</li>
-      <li>Access Docker CLI or socket outside the API</li>
-      <li>Escalate their own permissions or manipulate API keys</li>
-      <li>Delete system containers (wagmios-backend, wagmios-frontend)</li>
-      <li>Read/write files outside the containers directory</li>
     </ul>
     
     <h3>Example Dialogues</h3>
@@ -759,7 +750,7 @@ docker compose logs -f frontend</code></pre>
 <footer>
   <div class="container">
     <img src="logo/removed-background.png" alt="WAGMIOS" class="logo">
-    <p>WAGMIOS — Docker management for humans. Built with 🏠 for homelabs everywhere.</p>
+    <p>WAGMIOS — Give your agent a homelab. Built with 🏠 for self-hosters.</p>
     <p style="margin-top: 8px;">
       <a href="https://github.com/mentholmike/wagmios">GitHub</a> ·
       <a href="https://marketplace.wagmilabs.fun">Marketplace</a> ·
