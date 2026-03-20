@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAGMIOS Wiki — Docker Management for Humans</title>
+  <link rel="icon" type="image/png" href="logo/removed-background.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --text-muted: #8888a0;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --code-bg: #0d0d14;
+    }
+    
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    
+    header .container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .logo { height: 40px; }
+    
+    header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    header .badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    header .links {
+      margin-left: auto;
+      display: flex;
+      gap: 24px;
+    }
+    
+    header .links a {
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    header .links a:hover { color: var(--text); text-decoration: none; }
+    
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 60%);
+    }
+    
+    .hero img.logo { height: 80px; margin-bottom: 24px; }
+    
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+    
+    .hero p {
+      font-size: 20px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    
+    .hero .cta {
+      display: inline-flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .btn {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    
+    .btn-primary:hover { background: var(--accent2); text-decoration: none; }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent2); text-decoration: none; }
+    
+    /* Nav pills */
+    .page-nav {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 81px;
+      background: var(--bg);
+      z-index: 90;
+    }
+    
+    .page-nav .container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .page-nav a {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    
+    .page-nav a:hover, .page-nav a.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+      text-decoration: none;
+    }
+    
+    /* Content */
+    .content { padding: 48px 0; }
+    
+    section { margin-bottom: 64px; }
+    
+    section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    
+    section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: #fff;
+    }
+    
+    section p {
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      max-width: 780px;
+    }
+    
+    section h2::before {
+      content: '#';
+      color: var(--accent);
+      margin-right: 8px;
+      font-weight: 400;
+    }
+    
+    h3::before {
+      content: '##';
+      color: var(--accent);
+      margin-right: 8px;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    
+    /* Code */
+    code {
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: var(--accent2);
+      border: 1px solid var(--border);
+    }
+    
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+    }
+    
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: #e0e0e8;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 14px;
+    }
+    
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      background: var(--surface);
+      color: #fff;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    
+    tr:last-child td { border-bottom: none; }
+    
+    td code { font-size: 12px; }
+    
+    /* Cards grid */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 16px 0 24px;
+    }
+    
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    
+    .card .emoji { font-size: 32px; margin-bottom: 12px; }
+    
+    .card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    
+    .card p { font-size: 13px; color: var(--text-muted); margin: 0; }
+    
+    /* Tags */
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    
+    .tag.green { background: rgba(34,197,94,0.15); color: var(--green); border-color: rgba(34,197,94,0.3); }
+    .tag.red { background: rgba(239,68,68,0.15); color: var(--red); border-color: rgba(239,68,68,0.3); }
+    .tag.yellow { background: rgba(234,179,8,0.15); color: var(--yellow); border-color: rgba(234,179,8,0.3); }
+    
+    /* Scope table */
+    .scope-row td:first-child { color: var(--accent2); font-family: monospace; }
+    
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0;
+    }
+    
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    
+    footer img.logo { height: 32px; margin-bottom: 12px; }
+    
+    /* Marketplace grid */
+    .marketplace-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 16px 0 24px;
+    }
+    
+    .market-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .market-item .port {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface2);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: auto;
+      font-family: monospace;
+    }
+    
+    .market-item .name { font-size: 13px; font-weight: 500; color: #fff; }
+    .market-item .cat { font-size: 11px; color: var(--text-muted); }
+    
+    /* Callout */
+    .callout {
+      background: var(--surface);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 16px 0 24px;
+    }
+    
+    .callout.warning { border-color: var(--yellow); }
+    .callout.danger { border-color: var(--red); }
+    
+    .callout p { margin: 0; }
+    
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 32px; }
+      header .links { display: none; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <img src="logo/removed-background.png" alt="WAGMIOS" class="logo">
+    <h1>WAGMIOS</h1>
+    <span class="badge">v2.0</span>
+    <nav class="links">
+      <a href="#quickstart">Quick Start</a>
+      <a href="#scopes">Scopes</a>
+      <a href="#api">API</a>
+      <a href="#marketplace">Marketplace</a>
+      <a href="#agents">For Agents</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <img src="logo/removed-background.png" alt="WAGMIOS" class="logo">
+  <h1>Docker Management<br>for Humans</h1>
+  <p>Self-hosted container management with scope-based permissions, a one-click app marketplace, and agent-safe API design.</p>
+  <div class="cta">
+    <a href="https://github.com/mentholmike/wagmios" class="btn btn-primary">GitHub</a>
+    <a href="https://marketplace.wagmilabs.fun" class="btn btn-outline">Marketplace ↗</a>
+  </div>
+</section>
+
+<nav class="page-nav">
+  <div class="container">
+    <a href="#what">What is it?</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="#scopes">Scopes</a>
+    <a href="#api">API Reference</a>
+    <a href="#marketplace">Marketplace</a>
+    <a href="#agents">For AI Agents</a>
+    <a href="#docker">Docker</a>
+    <a href="#architecture">Architecture</a>
+  </div>
+</nav>
+
+<div class="content container">
+
+  <section id="what">
+    <h2>What is WAGMIOS?</h2>
+    <p>WAGMIOS is a self-hosted Docker management platform with an API-first design. It gives you a clean REST API to manage containers, install self-hosted apps from a marketplace, and — most importantly — control exactly what AI agents can do with your homelab.</p>
+    
+    <div class="cards">
+      <div class="card">
+        <div class="emoji">🔐</div>
+        <h4>Scope-Based Permissions</h4>
+        <p>Give agents exactly the permissions they need — nothing blanket.</p>
+      </div>
+      <div class="card">
+        <div class="emoji">🏪</div>
+        <h4>34+ Marketplace Apps</h4>
+        <p>One-click install Plex, Jellyfin, Ollama, Home Assistant, and more.</p>
+      </div>
+      <div class="card">
+        <div class="emoji">🤖</div>
+        <h4>Agent-Safe Design</h4>
+        <p>Agents interact with Docker only through the API. No workarounds.</p>
+      </div>
+      <div class="card">
+        <div class="emoji">⚡</div>
+        <h4>Real-Time Activity</h4>
+        <p>WebSocket-powered feed shows everything happening in your homelab.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="quickstart">
+    <h2>Quick Start</h2>
+    
+    <h3>1. Prerequisites</h3>
+    <p>Make sure Docker is installed and running:</p>
+    <pre><code>docker --version
+docker ps</code></pre>
+    
+    <h3>2. Run WAGMIOS</h3>
+    <pre><code>git clone https://github.com/mentholmike/wagmios.git
+cd wagmios
+docker compose up -d</code></pre>
+    
+    <h3>3. Open the UI</h3>
+    <table>
+      <tr><th>Service</th><th>URL</th></tr>
+      <tr><td>Frontend</td><td><code>http://localhost:5174</code></td></tr>
+      <tr><td>Backend API</td><td><code>http://localhost:5179</code></td></tr>
+      <tr><td>Health Check</td><td><code>http://localhost:5179/health</code></td></tr>
+    </table>
+    
+    <h3>4. Get Your API Key</h3>
+    <p>The Setup Wizard walks you through naming your key and picking permissions. Copy the key — you won't see it again.</p>
+  </section>
+
+  <hr>
+
+  <section id="scopes">
+    <h2>Scope System</h2>
+    <p>Every WAGMIOS API key has <strong>scopes</strong> — granular permissions that control exactly what an agent can do. If the key doesn't have a scope, the API returns <code>SCOPE_REQUIRED</code> and the agent can't work around it.</p>
+    
+    <div class="callout">
+      <p>💡 <strong>The rule is simple:</strong> Scope = Permission. No scope = blocked.</p>
+    </div>
+    
+    <table>
+      <tr><th>Scope</th><th>What It Allows</th></tr>
+      <tr class="scope-row"><td><code>containers:read</code></td><td>List containers, inspect, view logs</td></tr>
+      <tr class="scope-row"><td><code>containers:write</code></td><td>Create, start, stop, restart containers</td></tr>
+      <tr class="scope-row"><td><code>containers:delete</code></td><td>Delete containers</td></tr>
+      <tr class="scope-row"><td><code>images:read</code></td><td>List Docker images</td></tr>
+      <tr class="scope-row"><td><code>images:write</code></td><td>Pull and delete images</td></tr>
+      <tr class="scope-row"><td><code>marketplace:read</code></td><td>Browse the app marketplace</td></tr>
+      <tr class="scope-row"><td><code>marketplace:write</code></td><td>Install and manage marketplace apps</td></tr>
+      <tr class="scope-row"><td><code>templates:read</code></td><td>Use saved compose templates</td></tr>
+      <tr class="scope-row"><td><code>templates:write</code></td><td>Create and edit templates</td></tr>
+    </table>
+    
+    <h3>Agent Decision Tree</h3>
+    <pre><code>User asks agent to do X
+    │
+    ├── Does key have scope for X?
+    │       NO  → Tell user to enable it in Settings → Agent Permissions
+    │       YES → Continue
+    │
+    ├── Is X destructive (delete)?
+    │       YES → Confirm with user first
+    │       NO  → Execute
+    │
+    └── Report result</code></pre>
+  </section>
+
+  <hr>
+
+  <section id="api">
+    <h2>API Reference</h2>
+    <p>Base URL: <code>http://localhost:5179</code> — All requests require <code>X-API-Key: &lt;key&gt;</code> header.</p>
+    
+    <h3>Auth</h3>
+    <pre><code>GET /api/auth/status     → Check key scopes and metadata
+GET /api/settings        → Key info (label, prefix, created date, scopes)</code></pre>
+    
+    <h3>Containers</h3>
+    <pre><code>GET  /api/containers                        → List all containers (scope: containers:read)
+GET  /api/containers/{id}/logs?tail=100      → Container logs (scope: containers:read)
+POST /api/containers/{id}/start             → Start container (scope: containers:write)
+POST /api/containers/{id}/stop              → Stop container (scope: containers:write)
+POST /api/containers/{id}/restart           → Restart container (scope: containers:write)
+DELETE /api/containers/{id}/delete         → Delete container (scope: containers:delete)</code></pre>
+    
+    <h3>Images</h3>
+    <pre><code>GET    /api/images                 → List images (scope: images:read)
+POST   /api/images/pull            → Pull image { "image": "nginx:latest" } (scope: images:write)
+DELETE /api/images/{id}            → Delete image (scope: images:write)</code></pre>
+    
+    <h3>Marketplace</h3>
+    <pre><code>GET    /api/marketplace              → Browse apps (scope: marketplace:read)
+POST   /api/marketplace/create       → Install app { "app_id": "nginx", "container_name": "my-nginx" } (scope: marketplace:write)
+POST   /api/marketplace/start        → Start app (scope: marketplace:write)</code></pre>
+    
+    <h3>Response Format</h3>
+    <pre><code>{
+  "success": true,
+  "data": { ... },
+  "error": null
+}
+
+// On error:
+{
+  "success": false,
+  "data": null,
+  "error": { "code": "SCOPE_REQUIRED", "message": "containers:delete scope required" }
+}</code></pre>
+    
+    <h3>Error Codes</h3>
+    <table>
+      <tr><th>Code</th><th>Meaning</th></tr>
+      <tr><td><code>SCOPE_REQUIRED</code></td><td>Key missing required scope — do not retry</td></tr>
+      <tr><td><code>INVALID_KEY</code></td><td>Key is invalid or revoked</td></tr>
+      <tr><td><code>PROTECTED</code></td><td>Cannot modify system containers (wagmios-backend, wagmios-frontend)</td></tr>
+      <tr><td><code>DOCKER_ERROR</code></td><td>Docker operation failed</td></tr>
+      <tr><td><code>NOT_FOUND</code></td><td>Resource not found</td></tr>
+    </table>
+  </section>
+
+  <hr>
+
+  <section id="marketplace">
+    <h2>Marketplace</h2>
+    <p>Browse and install 34+ pre-configured self-hosted apps. Visit <a href="https://marketplace.wagmilabs.fun" target="_blank">marketplace.wagmilabs.fun ↗</a> for the full catalog.</p>
+    
+    <h3>Media & Entertainment</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Plex</div><div class="cat">Media Server</div></div><span class="port">32400</span></div>
+      <div class="market-item"><div><div class="name">Jellyfin</div><div class="cat">Media Server</div></div><span class="port">8096</span></div>
+      <div class="market-item"><div><div class="name">Immich</div><div class="cat">Photo Backup</div></div><span class="port">2283</span></div>
+    </div>
+    
+    <h3>AI & Local Models</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Ollama</div><div class="cat">AI Models</div></div><span class="port">11434</span></div>
+      <div class="market-item"><div><div class="name">Open WebUI</div><div class="cat">Chat UI</div></div><span class="port">8080</span></div>
+    </div>
+    
+    <h3>Home Automation</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Home Assistant</div><div class="cat">Smart Home</div></div><span class="port">8123</span></div>
+    </div>
+    
+    <h3>arr Stack</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Sonarr</div><div class="cat">TV Downloads</div></div><span class="port">8989</span></div>
+      <div class="market-item"><div><div class="name">Radarr</div><div class="cat">Movie Downloads</div></div><span class="port">7878</span></div>
+      <div class="market-item"><div><div class="name">Prowlarr</div><div class="cat">Indexer Manager</div></div><span class="port">9696</span></div>
+    </div>
+    
+    <h3>Monitoring</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Uptime Kuma</div><div class="cat">Monitoring</div></div><span class="port">3001</span></div>
+      <div class="market-item"><div><div class="name">Grafana</div><div class="cat">Dashboards</div></div><span class="port">3000</span></div>
+      <div class="market-item"><div><div class="name">Prometheus</div><div class="cat">Metrics</div></div><span class="port">9090</span></div>
+      <div class="market-item"><div><div class="name">Glances</div><div class="cat">System Monitor</div></div><span class="port">61208</span></div>
+    </div>
+    
+    <h3>Security</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Vaultwarden</div><div class="cat">Password Manager</div></div><span class="port">80</span></div>
+    </div>
+    
+    <h3>Networking</h3>
+    <div class="marketplace-grid">
+      <div class="market-item"><div><div class="name">Nginx</div><div class="cat">Web Server</div></div><span class="port">80</span></div>
+      <div class="market-item"><div><div class="name">Pi-hole</div><div class="cat">Ad Blocking</div></div><span class="port">80</span></div>
+      <div class="market-item"><div><div class="name">AdGuard Home</div><div class="cat">DNS Blocking</div></div><span class="port">3000</span></div>
+      <div class="market-item"><div><div class="name">WireGuard</div><div class="cat">VPN</div></div><span class="port">51820</span></div>
+    </div>
+    
+    <h3>+ More</h3>
+    <p>Transmission, qBittorrent, Nextcloud, Filebrowser, Minecraft, n8n, RSSHub, Web-Check, OpenClaw, Gluetun, InfluxDB, Supabase, Puter, Novu, and Windows Docker.</p>
+  </section>
+
+  <hr>
+
+  <section id="agents">
+    <h2>For AI Agents</h2>
+    <p>WAGMIOS is designed to be controlled by AI agents. The agent skill at <code>skills/wagmi/</code> provides the full context for safe agent operation.</p>
+    
+    <div class="callout">
+      <p>🤖 <strong>API only.</strong> Agents interact with Docker <em>only</em> through the WAGMIOS API. No direct docker CLI, no socket access, no workarounds.</p>
+    </div>
+    
+    <h3>What Agents Can Do</h3>
+    <ul>
+      <li>Install and manage apps from the marketplace</li>
+      <li>Start/stop containers based on user requests</li>
+      <li>Monitor homelab status via metrics</li>
+      <li>Pull Docker images</li>
+    </ul>
+    
+    <h3>What Agents Cannot Do</h3>
+    <ul>
+      <li>Execute direct shell commands on the host</li>
+      <li>Access Docker CLI or socket outside the API</li>
+      <li>Escalate their own permissions or manipulate API keys</li>
+      <li>Delete system containers (wagmios-backend, wagmios-frontend)</li>
+      <li>Read/write files outside the containers directory</li>
+    </ul>
+    
+    <h3>Example Dialogues</h3>
+    <pre><code>User: "Delete the test-nginx container"
+Agent: I need containers:delete scope to do that.
+  → Go to Settings → Agent Permissions → toggle ON → Save.
+  Let me know when it's enabled.
+
+User: "Done."
+Agent: DELETE /api/containers/{id}/delete → "Done. Container deleted."</code></pre>
+    
+    <pre><code>User: "Install Jellyfin"
+Agent: 1. GET /api/marketplace → find jellyfin app_id
+  2. POST /api/marketplace/create
+  3. "Compose downloaded. Start it now? (yes/no)"
+User: yes
+Agent: POST /api/marketplace/start
+  "Jellyfin is installed and running on port 8096."</code></pre>
+  </section>
+
+  <hr>
+
+  <section id="docker">
+    <h2>Docker Management</h2>
+    
+    <pre><code># Start
+docker compose up -d
+
+# Stop
+docker compose down
+
+# Rebuild after updates
+docker compose build && docker compose up -d
+
+# View logs
+docker compose logs -f backend
+docker compose logs -f frontend</code></pre>
+    
+    <h3>Data Persistence</h3>
+    <table>
+      <tr><th>Volume</th><th>Stores</th></tr>
+      <tr><td><code>wagmios_data</code></td><td>API keys, settings, app data</td></tr>
+      <tr><td><code>frontend_data</code></td><td>Frontend assets</td></tr>
+      <tr><td><code>~/.wagmios/containers/</code></td><td>Marketplace app compose files</td></tr>
+    </table>
+    
+    <h3>Environment Variables</h3>
+    <table>
+      <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>PORT</code></td><td><code>5179</code></td><td>Backend port</td></tr>
+      <tr><td><code>WAGMIOS_DATA_DIR</code></td><td><code>/app/data</code></td><td>Data directory</td></tr>
+    </table>
+  </section>
+
+  <hr>
+
+  <section id="architecture">
+    <h2>Architecture</h2>
+    
+    <table>
+      <tr><th>Layer</th><th>Technology</th></tr>
+      <tr><td>Backend</td><td>Go (net/http, gorilla/mux)</td></tr>
+      <tr><td>Frontend</td><td>Vue 3 + Vite + TypeScript</td></tr>
+      <tr><td>Styling</td><td>TailwindCSS, custom dark mode</td></tr>
+      <tr><td>Data</td><td>JSON files (keys, settings)</td></tr>
+      <tr><td>Container Runtime</td><td>Docker (via socket)</td></tr>
+      <tr><td>Activity Feed</td><td>WebSocket</td></tr>
+    </table>
+    
+    <h3>Project Structure</h3>
+    <pre><code>wagmios/
+├── backend-go/           # Go API server
+│   └── internal/
+│       ├── api/          # Container/image endpoints
+│       ├── auth/          # Key store, middleware, scopes
+│       ├── marketplace/   # App catalog and install handlers
+│       └── activity/     # WebSocket activity feed
+├── frontend/            # Vue.js UI
+│   └── src/
+│       ├── components/   # Vue components
+│       ├── api.ts        # API client
+│       └── App.vue       # Main app
+├── docs/                 # This wiki (GitHub Pages)
+├── logo/                 # Project logos
+├── docker-compose.yaml
+├── Dockerfile.backend
+└── Dockerfile.frontend</code></pre>
+  </section>
+
+</div>
+
+<footer>
+  <div class="container">
+    <img src="logo/removed-background.png" alt="WAGMIOS" class="logo">
+    <p>WAGMIOS — Docker management for humans. Built with 🏠 for homelabs everywhere.</p>
+    <p style="margin-top: 8px;">
+      <a href="https://github.com/mentholmike/wagmios">GitHub</a> ·
+      <a href="https://marketplace.wagmilabs.fun">Marketplace</a> ·
+      <a href="https://wiki.wagmilabs.fun">Wiki</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
