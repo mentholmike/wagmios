@@ -469,18 +469,38 @@
 
   <hr>
 
+  <section id="agent-integration">
+    <h2>🤖 OpenClaw Agent Skill</h2>
+    <p>Give your <a href="https://openclaw.ai">OpenClaw</a> agent a homelab. Install the skill directly into your agent:</p>
+    <pre><code>/clawh install mentholmike/wagmios</code></pre>
+    <p>The skill tells your agent how to:</p>
+    <ul>
+      <li>Authenticate with WAGMIOS using your API key</li>
+      <li>List, start, stop, and manage containers</li>
+      <li>Browse and install apps from the WAGMIOS Marketplace</li>
+      <li>Pull and manage Docker images</li>
+      <li>Work within scope-based permissions (no sudo, no workarounds)</li>
+    </ul>
+    <div class="callout">
+      <p>💡 <strong>Your agent needs an API key with the right scopes to use WAGMIOS.</strong> The Setup Wizard walks you through key creation and scope selection. Pick all the scopes your agent needs — you can always create separate keys for different agents.</p>
+    </div>
+    <p><strong>Skill URL:</strong> <a href="https://clawhub.ai/mentholmike/wagmios">https://clawhub.ai/mentholmike/wagmios</a></p>
+  </section>
+
+  <hr>
+
   <section id="quickstart">
     <h2>Quick Start</h2>
     
-    <h3>1. Prerequisites</h3>
-    <p>Make sure Docker is installed and running:</p>
-    <pre><code>docker --version
-docker ps</code></pre>
+    <h3>Option 1 — Pull from Docker Hub (Recommended)</h3>
+    <p>No build step. Images are pre-built for both x86_64 and ARM64.</p>
+    <pre><code>curl -O https://raw.githubusercontent.com/mentholmike/wagmios/main/docker-compose.yaml
+docker compose up -d</code></pre>
     
-    <h3>2. Run WAGMIOS</h3>
+    <h3>Option 2 — Build from Source</h3>
     <pre><code>git clone https://github.com/mentholmike/wagmios.git
 cd wagmios
-docker compose up -d</code></pre>
+docker compose up -d --build</code></pre>
     
     <h3>3. Open the UI</h3>
     <table>
@@ -754,7 +774,9 @@ docker compose logs -f frontend</code></pre>
     <p style="margin-top: 8px;">
       <a href="https://github.com/mentholmike/wagmios">GitHub</a> ·
       <a href="https://marketplace.wagmilabs.fun">Marketplace</a> ·
-      <a href="https://wiki.wagmilabs.fun">Wiki</a>
+      <a href="https://wiki.wagmilabs.fun">Wiki</a> ·
+      <a href="https://clawhub.ai/mentholmike/wagmios">OpenClaw Skill</a> ·
+      <a href="https://hub.docker.com/r/itzmizzle/wagmi">Docker Hub</a>
     </p>
   </div>
 </footer>

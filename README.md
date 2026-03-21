@@ -318,6 +318,27 @@ MIT License — do what you want with it.
 
 ---
 
+## 🤖 OpenClaw Skill
+
+Give your OpenClaw agent a homelab. Install the skill directly into your agent:
+
+```bash
+/clawh install mentholmike/wagmios
+```
+
+The skill tells your agent how to:
+- Authenticate with WAGMIOS using your API key
+- List, start, stop, and manage containers
+- Browse and install apps from the WAGMIOS Marketplace
+- Pull and manage Docker images
+- Work within scope-based permissions (no sudo, no workarounds)
+
+> **Your agent needs an API key with the right scopes to use WAGMIOS.** The skill will guide key setup on first use.
+
+**Skill URL:** https://clawhub.ai/mentholmike/wagmios
+
+---
+
 ## 🔗 Links
 
 | Resource | URL |
@@ -325,6 +346,8 @@ MIT License — do what you want with it.
 | **Main Repo** | https://github.com/mentholmike/wagmios |
 | **Marketplace** | https://marketplace.wagmilabs.fun |
 | **Documentation** | https://wiki.wagmilabs.fun |
+| **OpenClaw Skill** | https://clawhub.ai/mentholmike/wagmios |
+| **Docker Hub** | https://hub.docker.com/r/itzmizzle/wagmi |
 | **Issues** | https://github.com/mentholmike/wagmios/issues |
 
 ---
