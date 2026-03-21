@@ -1,0 +1,131 @@
+{
+  "numStartups": 1,
+  "installMethod": "native",
+  "autoUpdates": false,
+  "cachedGrowthBookFeatures": {
+    "tengu_herring_clock": false,
+    "tengu_event_sampling_config": {},
+    "tengu_frond_boric": {},
+    "tengu_log_segment_events": false,
+    "tengu_log_datadog_events": true,
+    "tengu_cicada_nap_ms": 0,
+    "tengu_miraculo_the_bard": false,
+    "tengu_miraculo_the_bard2": false,
+    "tengu_kairos_cron": true,
+    "tengu_paper_halyard": false,
+    "tengu_quiet_hollow": true,
+    "tengu_marble_anvil": true,
+    "tengu_tool_pear": false,
+    "tengu_scarf_coffee": false,
+    "tengu_chomp_inflection": false,
+    "tengu_penguins_off": null,
+    "tengu_granite_whisper": false,
+    "tengu_streaming_text": false,
+    "tengu_amber_quartz": false,
+    "tengu-top-of-feed-tip": {
+      "tip": "",
+      "color": ""
+    },
+    "tengu_marble_whisper": false,
+    "tengu_turtle_carbon": true,
+    "tengu_pr_status_cli": true,
+    "tengu_ccr_bridge": true,
+    "tengu_keybinding_customization_release": true,
+    "tengu_post_compact_survey": false,
+    "tengu_desktop_upsell": {
+      "enable_shortcut_tip": true,
+      "enable_startup_dialog": false
+    },
+    "tengu_claudeai_mcp_connectors": true,
+    "tengu_scratch": false,
+    "tengu_1p_event_batch_config": {
+      "scheduledDelayMillis": 10000,
+      "maxExportBatchSize": 400,
+      "maxQueueSize": 8192
+    },
+    "tengu_grey_wool": true,
+    "tengu_auto_mode_config": {
+      "enabled": "disabled",
+      "twoStageClassifier": true
+    },
+    "tengu_disable_bypass_permissions_mode": false,
+    "tengu_pid_based_version_locking": true,
+    "tengu_thinkback": false,
+    "tengu_tangerine_ladder_boost": true
+  },
+  "firstStartTime": "2026-03-09T20:38:46.972Z",
+  "opusProMigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "userID": "7747b651a18425b9f57da207b5c66c05491b8d7d6b6f43ae6bfce729a8165d81",
+  "changelogLastFetched": 1773184957125,
+  "autoUpdatesProtectedForNative": true,
+  "oauthAccount": {
+    "accountUuid": "422d7d4d-202f-4a7f-a176-854d979604cf",
+    "emailAddress": "mentholmike@duck.com",
+    "organizationUuid": "8d899508-4db6-48c7-9f16-3240ac8a6089",
+    "hasExtraUsageEnabled": false,
+    "billingType": "apple_subscription",
+    "accountCreatedAt": "2026-03-09T17:54:20.684314Z",
+    "subscriptionCreatedAt": "2026-03-09T17:55:22.319485Z",
+    "displayName": "Mike",
+    "organizationRole": "admin",
+    "workspaceRole": null,
+    "organizationName": "mentholmike@duck.com's Organization"
+  },
+  "claudeCodeFirstTokenDate": "2026-03-09T20:54:18.872106Z",
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "2.1.71",
+  "projects": {
+    "/home/ubuntu/.openclaw": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 1,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "lastCost": 0,
+      "lastAPIDuration": 0,
+      "lastAPIDurationWithoutRetries": 0,
+      "lastToolDuration": 0,
+      "lastDuration": 92078,
+      "lastLinesAdded": 0,
+      "lastLinesRemoved": 0,
+      "lastTotalInputTokens": 0,
+      "lastTotalOutputTokens": 0,
+      "lastTotalCacheCreationInputTokens": 0,
+      "lastTotalCacheReadInputTokens": 0,
+      "lastTotalWebSearchRequests": 0,
+      "lastFpsAverage": 0.9,
+      "lastFpsLow1Pct": 14.57,
+      "lastModelUsage": {},
+      "lastSessionId": "7c1c45f3-1486-40c8-9101-12e50b7ab005",
+      "lastSessionMetrics": {
+        "frame_duration_ms_count": 82,
+        "frame_duration_ms_min": 0.15812200000800658,
+        "frame_duration_ms_max": 68.64246099999991,
+        "frame_duration_ms_avg": 7.170126658536956,
+        "frame_duration_ms_p50": 3.4736364999994294,
+        "frame_duration_ms_p95": 18.625525100000413,
+        "frame_duration_ms_p99": 62.49699423999989
+      }
+    }
+  },
+  "lastReleaseNotesSeen": "2.1.71",
+  "clientDataCache": {
+    "data": {},
+    "timestamp": 1773185039803
+  },
+  "penguinModeOrgEnabled": false,
+  "groveConfigCache": {
+    "422d7d4d-202f-4a7f-a176-854d979604cf": {
+      "grove_enabled": true,
+      "timestamp": 1773185039918
+    }
+  },
+  "cachedExtraUsageDisabledReason": "org_level_disabled",
+  "officialMarketplaceAutoInstallAttempted": true,
+  "officialMarketplaceAutoInstalled": true
+}
