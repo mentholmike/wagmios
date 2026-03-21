@@ -323,7 +323,7 @@ MIT License — do what you want with it.
 Give your OpenClaw agent a homelab. Install the skill directly into your agent:
 
 ```bash
-/clawh install mentholmike/wagmios
+/clawhub install wagmi
 ```
 
 The skill tells your agent how to:
