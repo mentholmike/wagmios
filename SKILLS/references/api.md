@@ -1,6 +1,6 @@
 # API Reference
 
-**Base URL:** `http://localhost:5179` (user provides)
+**Base URL:** `http://localhost:5179` (user provides — may differ for remote/multi-machine setups)
 **Auth:** `X-API-Key: <key>` header on all requests
 
 ---
@@ -49,7 +49,7 @@ Returns key metadata and scopes.
     "wizard_required": false,
     "meta": {
       "id": "...",
-      "key_prefix": "abc123...",
+      "key_prefix": "wag_live_abc...",
       "label": "agent-key",
       "scopes": ["containers:read", "containers:write", ...],
       "created_at": "2026-03-20T12:00:00Z",
@@ -65,6 +65,24 @@ GET /api/settings
 Scope: any
 ```
 Returns current key info (label, prefix, created date, scopes).
+
+---
+
+## System
+
+### System Info
+```
+GET /api/system/info
+Scope: any
+```
+Returns Docker version, API version, and system information.
+
+### System Metrics
+```
+GET /api/system/metrics
+Scope: any (no auth required)
+```
+Returns CPU, memory, disk usage, and container counts.
 
 ---
 
@@ -102,6 +120,13 @@ Required Scope: containers:read
 ```
 Returns container log output.
 
+### Container Config
+```
+GET /api/containers/{id}/config
+Required Scope: containers:read
+```
+Returns the full container configuration (environment, volumes, ports, etc.).
+
 ### Start Container
 ```
 POST /api/containers/{id}/start
@@ -132,7 +157,7 @@ Required Scope: containers:delete
 { "success": true, "data": { "status": "deleted" } }
 ```
 
-### Create Container (from image)
+### Create Container
 ```
 POST /api/containers
 Required Scope: containers:write
@@ -185,25 +210,19 @@ Required Scope: marketplace:read
 ```
 Returns all available marketplace apps.
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "apps": [
-      {
-        "id": "nginx",
-        "name": "Nginx",
-        "description": "Web server and reverse proxy...",
-        "category": "Networking",
-        "defaultPort": 80,
-        "verified": true,
-        "popularity": 4.9
-      }
-    ]
-  }
-}
+### Get App Details
 ```
+GET /api/marketplace/{app_id}
+Required Scope: marketplace:read
+```
+Returns details for a specific marketplace app.
+
+### List Installed Apps
+```
+GET /api/marketplace/installed
+Required Scope: marketplace:read
+```
+Returns all apps installed via the marketplace on this host.
 
 ### Create (Download) App
 ```
@@ -213,10 +232,15 @@ Required Scope: marketplace:write
 Body:
 {
   "app_id": "nginx",
-  "container_name": "my-nginx"
+  "container_name": "my-nginx",
+  "custom_name": "my-custom-app",
+  "environment": {
+    "MY_VAR": "my-value",
+    "TZ": "America/New_York"
+  }
 }
 ```
-Downloads the compose file. Does not start the app.
+Downloads the compose file. Does not start the app. Accepts optional `custom_name` and `environment` params to override template defaults.
 
 **Response:**
 ```json
@@ -226,6 +250,7 @@ Downloads the compose file. Does not start the app.
     "app_id": "nginx",
     "app_name": "Nginx",
     "compose_path": "/app/data/containers/nginx/nginx-123456/docker-compose.yml",
+    "install_dir": "/app/data/containers/nginx/nginx-123456",
     "status": "created"
   }
 }
@@ -243,43 +268,38 @@ Body:
   "compose_path": "/app/data/containers/nginx/nginx-123456/docker-compose.yml"
 }
 ```
-Pulls image and starts the container(s).
+Pulls image and starts the container(s) via `docker compose up -d`.
 
 ---
 
-## Metrics
+## Templates
 
-### System Metrics
+### List Templates
 ```
-GET /api/metrics/summary
-Scope: public (no auth required)
+GET /api/containers/templates
+Required Scope: templates:read
 ```
-Returns CPU, memory, disk usage, and container counts.
+Returns all saved compose templates.
 
----
-
-## Activity
-
-### Activity Feed
+### Get Template
 ```
-GET /api/activity?limit=100
-Required Scope: any
+GET /api/containers/templates/{name}
+Required Scope: templates:read
 ```
-Returns recent container and system events.
+Returns a specific saved template by name.
 
----
-
-## Settings
-
-### Update Scopes
+### Save Template
 ```
-POST /api/settings/scopes
-Required Scope: any (key must already exist)
+POST /api/containers/templates
+Required Scope: templates:write
 
 Body:
-{ "scopes": ["containers:read", "containers:write", "containers:delete"] }
+{
+  "name": "my-template",
+  "compose": "version: '3.8'\n\nservices:\n  my-app:\n    image: nginx:alpine\n..."
+}
 ```
-Updates the key's permissions. User must confirm this action.
+Saves a compose template for reuse.
 
 ---
 
@@ -290,7 +310,8 @@ Updates the key's permissions. User must confirm this action.
 | `SCOPE_REQUIRED` | Key missing required scope — do not retry |
 | `INVALID_KEY` | Key is invalid or revoked |
 | `API_KEY_REQUIRED` | No X-API-Key header provided |
-| `PROTECTED` | Cannot modify system containers |
+| `PROTECTED` | Cannot modify system containers (wagmios-backend, wagmios-frontend) |
 | `DOCKER_ERROR` | Docker operation failed |
 | `NOT_FOUND` | Resource not found |
 | `LIMIT_REACHED` | Container/image limit hit |
+| `APP_ID_REQUIRED` | marketplace/create requires app_id field |

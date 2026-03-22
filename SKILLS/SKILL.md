@@ -1,6 +1,6 @@
 ---
 name: wagmios
-description: Give your OpenClaw agent a homelab. Use when managing Docker containers, installing marketplace apps, or any Docker-related tasks on behalf of the user. Scope-based API key permissions — agent can only do what the key allows. On Linux, Docker requires sudo — without root access, WAGMIOS is the only safe interface for agent homelab control. Requires X-API-Key header on every request (user provides at runtime). Includes Docker installation check and startup validation.
+description: Give your OpenClaw agent a homelab. Use when managing Docker containers, installing marketplace apps, or any Docker-related tasks on behalf of the user. Scope-based API key permissions — agent can only do what the key allows. On Linux, Docker requires sudo — without root access, WAGMIOS is the only safe interface for agent homelab control. Supports multi-machine management — one agent can manage multiple WAGMIOS instances across different hosts, each with its own scoped key. Requires X-API-Key header on every request (user provides at runtime). Includes Docker installation check and startup validation.
 ---
 
 # WAGMIOS
@@ -21,11 +21,11 @@ The WAGMIOS API is the **primary interface** for container management. On Linux,
 
 ## Startup Check (First Interaction)
 
-Before attempting any WAGMIOS operation, verify Docker is available:
+Before attempting any WAGMIOS operation:
 
-```
-Agent: GET /api/system/info or check Docker availability
-```
+1. **Confirm Docker is available** — WAGMIOS manages Docker containers, so Docker must be running on the host
+2. **Confirm backend is reachable** — the backend port (default 5179) must be accessible
+3. **Check key scopes** — call `GET /api/auth/status` to know what the key can do
 
 **If Docker is not installed or running:**
 → See `references/docker-install.md` for installation instructions by OS.
@@ -40,7 +40,7 @@ Agent: GET /api/system/info or check Docker availability
 Every request requires the `X-API-Key` header. The user provides the key and base URL at runtime — do not store it.
 
 ```
-Base URL: http://localhost:5179 (user provides)
+Base URL: http://localhost:5179 (user provides, may differ for remote hosts)
 Header:   X-API-Key: <key>
 ```
 
@@ -96,6 +96,31 @@ User asks to do X
 
 ---
 
+## Multi-Machine Management
+
+WAGMIOS supports managing multiple hosts from a single agent. Each machine runs its own WAGMIOS instance with its own URL and its own scoped API key.
+
+**How it works:**
+1. User installs WAGMIOS on each machine they want to manage
+2. User creates a separate API key per machine, with only the scopes that machine needs
+3. User provides the agent with the URL and key for each machine
+4. Agent routes requests to the correct machine based on the user's request
+
+**Example:**
+```
+User: "Install Jellyfin on the media server and make sure Nginx is running on the NAS."
+
+Agent → POST media-server:5179/api/marketplace/create { "app_id": "jellyfin" }
+Agent → GET nas:5179/api/containers
+Agent → POST nas:5179/api/containers/nginx/start
+
+"Jellyfin is installing on the media server (port 8096). Nginx is running on the NAS."
+```
+
+**Key principle:** Each instance is independent. The agent cannot move containers between machines, cannot escalate permissions beyond what a key allows, and each action is logged in the instance's own activity feed.
+
+---
+
 ## Safeguards
 
 → See `references/safeguards.md`
@@ -111,6 +136,10 @@ User asks to do X
 ## Marketplace
 
 → See `references/marketplace.md`
+
+## Workflows
+
+→ See `references/workflows.md`
 
 ## Scope Reference
 

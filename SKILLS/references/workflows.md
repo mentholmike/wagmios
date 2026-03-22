@@ -58,7 +58,7 @@ Agent: "Done. Container deleted."
 
 ---
 
-## 5. Install From Marketplace
+## 5. Install From Marketplace (Basic)
 
 ```
 User: "Install Jellyfin"
@@ -76,7 +76,30 @@ Agent: "Jellyfin is installed and running on port 8096."
 
 ---
 
-## 6. Scope Missing for Marketplace Browse
+## 6. Install From Marketplace (With Custom Env Vars)
+
+```
+User: "Install Jellyfin with a custom published URL and TZ set to America/New_York"
+Agent: GET /api/marketplace → find jellyfin app_id
+Agent: POST /api/marketplace/create
+  Body: {
+    "app_id": "jellyfin",
+    "container_name": "my-jellyfin",
+    "environment": {
+      "JELLYFIN_PublishedServerUrl": "https://media.example.com",
+      "TZ": "America/New_York"
+    }
+  }
+Agent: "Jellyfin compose file downloaded with your custom environment variables.
+  Ready to start. Should I start it now? (yes/no)"
+User: yes
+Agent: POST /api/marketplace/start
+Agent: "Jellyfin is installed and running on port 8096."
+```
+
+---
+
+## 7. Scope Missing for Marketplace Browse
 
 ```
 User: "What apps are available?"
@@ -88,7 +111,7 @@ Agent: "I can't browse the marketplace — your key is missing `marketplace:read
 
 ---
 
-## 7. Pull an Image
+## 8. Pull an Image
 
 ```
 User: "Pull the nginx image"
@@ -100,7 +123,7 @@ Agent: "Pulling nginx:latest...
 
 ---
 
-## 8. Stop a Running Container
+## 9. Stop a Running Container
 
 ```
 User: "Stop the jellyfin container"
@@ -112,7 +135,7 @@ Agent: "Jellyfin is stopped."
 
 ---
 
-## 9. User Asks to Do Something Unavailable
+## 10. User Asks to Do Something Unavailable
 
 ```
 User: "Can you update my Docker version?"
@@ -122,13 +145,46 @@ Agent: "That's a host system operation, not something I can do through the WAGMI
 
 ---
 
-## 10. Error — Protected Container
+## 11. Error — Protected Container
 
 ```
 User: "Delete wagmios-backend"
 Agent: DELETE /api/containers/{id}/delete → PROTECTED
 Agent: "I can't delete `wagmios-backend` — it's a system container and is protected.
   System containers (wagmios-backend, wagmios-frontend) cannot be deleted."
+```
+
+---
+
+## 12. Multi-Machine: Agent Managing Multiple Hosts
+
+```
+User: "Install Jellyfin on the media server and make sure Nginx is running on the NAS."
+
+Agent: POST media-server:5179/api/marketplace/create
+  Body: { "app_id": "jellyfin", "container_name": "media-jellyfin" }
+Agent: "Jellyfin compose downloaded on media server. Starting it now..."
+Agent: POST media-server:5179/api/marketplace/start
+  Body: { "app_id": "jellyfin", "container_name": "media-jellyfin",
+          "compose_path": "/app/data/containers/jellyfin/..." }
+Agent: GET nas:5179/api/containers → find nginx container
+Agent: POST nas:5179/api/containers/{nginx-id}/start
+Agent: "Done. Jellyfin is installing on the media server (port 8096).
+  Nginx is running on the NAS."
+```
+
+---
+
+## 13. Multi-Machine: Key Missing Scope on One Host
+
+```
+User: "Delete the test container on the VPS."
+
+Agent: GET vps:5179/api/containers → find test container
+Agent: DELETE vps:5179/api/containers/{id}/delete → SCOPE_REQUIRED
+Agent: "I can't delete the container on the VPS — the key for that machine
+  is missing the `containers:delete` scope. You'll need to enable it on that
+  WAGMIOS instance's Settings → Agent Permissions page."
 ```
 
 ---
@@ -140,3 +196,4 @@ Agent: "I can't delete `wagmios-backend` — it's a system container and is prot
 3. **Tell the user what they need to do** — if a scope is missing, give clear instructions
 4. **Report outcomes clearly** — success, failure, and what happened
 5. **Never work around errors** — if `SCOPE_REQUIRED`, accept it and ask the user
+6. **Route to the correct machine** — when managing multiple hosts, use the right URL+key for each

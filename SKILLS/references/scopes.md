@@ -8,15 +8,17 @@
 
 | Scope | What It Allows |
 |-------|---------------|
-| `containers:read` | List containers, inspect, view logs |
+| `containers:read` | List containers, inspect, view logs, get container config |
 | `containers:write` | Create, start, stop, restart containers |
 | `containers:delete` | Delete containers |
 | `images:read` | List all Docker images |
 | `images:write` | Pull new images, delete images |
 | `templates:read` | Use saved container templates |
 | `templates:write` | Create and edit templates |
-| `marketplace:read` | Browse the app marketplace |
+| `marketplace:read` | Browse the app marketplace, list installed apps |
 | `marketplace:write` | Install and manage marketplace apps |
+| `system:read` | View system info and metrics |
+| `secrets:write` | Manage secrets (requires additional approval) |
 
 ---
 
@@ -31,7 +33,7 @@
 ### "I want to delete a container"
 → Need `containers:delete`
 
-### "I want to view container logs"
+### "I want to view container logs or config"
 → Need `containers:read`
 
 ### "I want to pull a Docker image"
@@ -46,26 +48,8 @@
 ### "I want to install/start/stop a marketplace app"
 → Need `marketplace:write`
 
----
-
-## Scope Hierarchy
-
-```
-containers:read
-    └── containers:write
-            └── containers:delete
-
-images:read
-    └── images:write
-
-templates:read
-    └── templates:write
-
-marketplace:read
-    └── marketplace:write
-```
-
-Note: Deleting a container does not require `containers:write` — only `containers:delete`.
+### "I want to view system metrics or Docker info"
+→ Need `system:read`
 
 ---
 
