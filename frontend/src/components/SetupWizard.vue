@@ -178,7 +178,7 @@ const scopeGroups = ref([
   { group: 'images:read', description: 'List downloaded Docker images', enabled: true },
   { group: 'images:write', description: 'Pull and delete images', enabled: true },
   { group: 'templates:read', description: 'Use saved container templates', enabled: true },
-  { group: 'templates:write', description: 'Create and edit container templates', enabled: false },
+  { group: 'templates:write', description: 'Create and edit container templates', enabled: true },
   { group: 'marketplace:read', description: 'Browse the app marketplace', enabled: true },
   { group: 'marketplace:write', description: 'Install and manage marketplace apps', enabled: true },
 ])
