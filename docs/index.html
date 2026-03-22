@@ -390,6 +390,7 @@
     
     .callout p { margin: 0; }
     
+  <style>
     .mermaid {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -399,10 +400,140 @@
       overflow-x: auto;
     }
 
+    .stack-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .layer-label {
+      grid-column: 1 / -1;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 20px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .layer-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .layer-label:first-child { margin-top: 0; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--accent));
+      border-radius: 10px 10px 0 0;
+    }
+
+    .card-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-version {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .card-tag {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--tag-color, var(--muted));
+    }
+
+    .flow-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 2px;
+    }
+
+    .flow-node {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .flow-node-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .flow-node-sub {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+
+    .flow-arrow {
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .flow-node.go { border-color: rgba(0,173,216,0.3); }
+    .flow-node.vue { border-color: rgba(66,211,146,0.3); }
+    .flow-node.docker { border-color: rgba(36,150,237,0.3); }
+    .flow-node.ws { border-color: rgba(167,139,250,0.3); }
+    .flow-node.agent { border-color: rgba(245,158,11,0.3); }
+
     @media (max-width: 640px) {
       .hero h1 { font-size: 32px; }
       header .links { display: none; }
       .cards { grid-template-columns: 1fr; }
+      .stack-grid { grid-template-columns: 1fr; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
@@ -829,11 +960,11 @@ flowchart LR
 
     <div class="mermaid">
 flowchart LR
-    A["🤖 OpenClaw Agent"] -->|X-API-Key| B["Go API<br/>:5179"]
-    B -->|scope check| C["Docker Socket<br/>/var/run/docker.sock"]
-    C -->|events| B
-    B <-->|WebSocket| D["Vue UI<br/>:5174"]
-    D -->|user actions| B
+    A["🤖 OpenClaw Agent"] -->|"X-API-Key"| B["Go API<br/>:5179"]
+    B -->|"scope check"| C["Docker Socket<br/>/var/run/docker.sock"]
+    C -->|"events"| B
+    B <-->|"WebSocket"| D["Vue UI<br/>:5174"]
+    D -->|"user actions"| B
 
     subgraph Backend
     B --> E[middleware]
@@ -849,17 +980,94 @@ flowchart LR
     end
     </div>
 
-    <table>
-      <tr><th>Layer</th><th>Technology</th></tr>
-      <tr><td>Backend</td><td>Go (net/http, gorilla/mux)</td></tr>
-      <tr><td>Frontend</td><td>Vue 3 + Vite + TypeScript</td></tr>
-      <tr><td>Styling</td><td>TailwindCSS, custom dark mode</td></tr>
-      <tr><td>Data</td><td>JSON files (keys, settings)</td></tr>
-      <tr><td>Container Runtime</td><td>Docker (via socket)</td></tr>
-      <tr><td>Activity Feed</td><td>WebSocket</td></tr>
-    </table>
+    <div class="stack-grid">
+      <div class="layer-label">request flow</div>
+      <div class="flow-row">
+        <div class="flow-node agent">
+          <div class="flow-node-label">OpenClaw Agent</div>
+          <div class="flow-node-sub">X-API-Key header</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node go">
+          <div class="flow-node-label">Go API</div>
+          <div class="flow-node-sub">scope check</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node docker">
+          <div class="flow-node-label">Docker Socket</div>
+          <div class="flow-node-sub">/var/run/docker.sock</div>
+        </div>
+        <div class="flow-arrow">↔</div>
+        <div class="flow-node vue">
+          <div class="flow-node-label">Vue UI</div>
+          <div class="flow-node-sub">:5174</div>
+        </div>
+      </div>
 
-    <p>See the <a href="stack.html">full tech stack breakdown</a> for dependencies, versions, and the complete scope system reference.</p>
+      <div class="layer-label">backend</div>
+      <div class="card" style="--card-accent: #00ADD8;">
+        <div class="card-name" style="color:#00ADD8">Go 1.21</div>
+        <div class="card-version">net/http · gorilla/mux</div>
+        <div class="card-desc">API server, middleware, scope enforcement, Docker socket proxy, marketplace handler.</div>
+        <div class="card-tags">
+          <span class="card-tag" style="--tag-color:#00ADD8">gorilla/mux v1.8.1</span>
+          <span class="card-tag" style="--tag-color:#00ADD8">gorilla/websocket v1.5.1</span>
+          <span class="card-tag" style="--tag-color:#00ADD8">google/uuid v1.6.0</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: #A78BFA;">
+        <div class="card-name" style="color:#A78BFA">WebSocket feed</div>
+        <div class="card-version">gorilla/websocket · real-time</div>
+        <div class="card-desc">Live activity broadcast to UI. Every agent action — start, stop, pull, install — emits an event.</div>
+        <div class="card-tags">
+          <span class="card-tag" style="--tag-color:#A78BFA">activity log</span>
+          <span class="card-tag" style="--tag-color:#A78BFA">audit trail</span>
+        </div>
+      </div>
+
+      <div class="layer-label">frontend</div>
+      <div class="card" style="--card-accent: #42D392;">
+        <div class="card-name" style="color:#42D392">Vue 3</div>
+        <div class="card-version">Vite · Composition API</div>
+        <div class="card-desc">Reactive UI with dark mode. Container manager, marketplace browser, API key wizard, live activity feed.</div>
+        <div class="card-tags">
+          <span class="card-tag" style="--tag-color:#42D392">vue 3</span>
+          <span class="card-tag" style="--tag-color:#42D392">vite</span>
+          <span class="card-tag" style="--tag-color:#42D392">tailwindcss</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: #3178C6;">
+        <div class="card-name" style="color:#3178C6">TypeScript</div>
+        <div class="card-version">api.ts · typed client</div>
+        <div class="card-desc">Fully typed API client layer. All requests and responses are typed — no silent runtime failures.</div>
+        <div class="card-tags">
+          <span class="card-tag" style="--tag-color:#3178C6">strict mode</span>
+          <span class="card-tag" style="--tag-color:#3178C6">api.ts</span>
+        </div>
+      </div>
+
+      <div class="layer-label">infrastructure</div>
+      <div class="card" style="--card-accent: #2496ED;">
+        <div class="card-name" style="color:#2496ED">Docker</div>
+        <div class="card-version">socket · compose · multi-arch</div>
+        <div class="card-desc">Backend communicates via the Docker socket. Two-stage Alpine build. Multi-arch images for x86_64 and ARM64.</div>
+        <div class="card-tags">
+          <span class="card-tag" style="--tag-color:#2496ED">alpine:3.19</span>
+          <span class="card-tag" style="--tag-color:#2496ED">docker-compose</span>
+          <span class="card-tag" style="--tag-color:#2496ED">arm64 + amd64</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: #F59E0B;">
+        <div class="card-name" style="color:#F59E0B">Data layer</div>
+        <div class="card-version">JSON flat-file · gopkg.in/yaml.v3</div>
+        <div class="card-desc">API keys, settings, and app metadata stored in named Docker volumes. No external database required.</div>
+        <div class="card-tags">
+          <span class="card-tag" style="--tag-color:#F59E0B">wagmios_data</span>
+          <span class="card-tag" style="--tag-color:#F59E0B">yaml.v3</span>
+          <span class="card-tag" style="--tag-color:#F59E0B">zero deps</span>
+        </div>
+      </div>
+    </div>
   </section>
 
 </div>
