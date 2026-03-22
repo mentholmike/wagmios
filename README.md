@@ -87,6 +87,106 @@ Every WAGMIOS API key has **scopes** — granular permissions that control exact
 
 ---
 
+## 🌐 Multi-Machine Management
+
+WAGMIOS isn't just for one machine. Because the API is standard HTTP with an `X-API-Key` header, any OpenClaw agent that can reach your backend's port can manage that machine's Docker host — from anywhere.
+
+**The model is simple:** one agent, many machines, each with its own scoped key.
+
+### How It Works
+
+1. Install WAGMIOS on each machine you want to manage
+2. Each instance gets its own URL and its own set of API keys
+3. Your agent holds one key per machine, each with only the scopes that machine needs
+4. The agent can't cross machines, can't escalate its own permissions, and every action is logged in each instance's activity feed
+
+> **Each WAGMIOS instance is fully independent.** There is no shared state, no cluster, no sync between instances. Each deployment is standalone.
+
+### One Agent. Multiple Machines.
+
+```mermaid
+flowchart LR
+    A["🤖 OpenClaw Agent"] -->|"Key A (read+write)\nnas.yourdomain.com:5179"| B["Machine A\nHomelab NAS"]
+    A -->|"Key B (marketplace)\nmedia.yourdomain.com:5179"| C["Machine B\nMedia Server"]
+    A -->|"Key C (images:write)\nvps.yourdomain.com:5179"| D["Machine C\nVPS"]
+
+    style A fill:#F59E0B,color:#000
+    style B fill:#111318,color:#e8eaf0,stroke:#00ADD8
+    style C fill:#111318,color:#e8eaf0,stroke:#42D392
+    style D fill:#111318,color:#e8eaf0,stroke:#2496ED
+```
+
+**Example dialogue:**
+
+> **User:** "Install Jellyfin on the media server and make sure Nginx is running on the NAS."
+
+```
+Agent → POST media.yourdomain.com:5179/api/marketplace/create { "app_id": "jellyfin" }
+Agent → GET nas.yourdomain.com:5179/api/containers
+Agent → POST nas.yourdomain.com:5179/api/containers/nginx-proxy/start
+
+"Jellyfin is installing on the media server (port 8096). Nginx is running on the NAS."
+```
+
+### Skill Setup
+
+Give your agent one key per machine, label them clearly. Each key lives in your agent's skill config:
+
+```yaml
+wagmios_instances:
+  nas:
+    url: http://192.168.1.10:5179
+    key: wag_live_xxxxxxxxxxxx
+    scopes: [containers:read, containers:write]
+    label: "Homelab NAS"
+
+  media:
+    url: http://192.168.1.20:5179
+    key: wag_live_yyyyyyyyyyyy
+    scopes: [marketplace:read, marketplace:write]
+    label: "Media Server"
+
+  vps:
+    url: https://vps.yourdomain.com:5179
+    key: wag_live_zzzzzzzzzzzz
+    scopes: [containers:read, images:write]
+    label: "VPS"
+```
+
+The agent knows which URL to hit for which machine — and the scope system ensures it can only do what you've explicitly allowed on each one.
+
+### Security: Network Exposure
+
+WAGMIOS binds to all interfaces (`0.0.0.0`) by default. That's fine on a trusted LAN — but if you're exposing it beyond your local network, follow these steps first:
+
+| Environment | What to do |
+|-------------|-------------|
+| **Local LAN only** | No extra steps. Keep port 5179 firewalled from the internet. |
+| **Internet / VPN** | Put a reverse proxy in front and terminate TLS there. Never send API keys over plain HTTP outside your LAN. |
+
+**Treat your WAGMIOS API key like an SSH key.** Over a trusted LAN it's fine. Over the open internet, always use TLS.
+
+**Caddy (automatic HTTPS):**
+```yaml
+wagmios.yourdomain.com {
+  reverse_proxy localhost:5179
+}
+```
+
+**Nginx:**
+```nginx
+server {
+  listen 443 ssl;
+  server_name wagmios.yourdomain.com;
+
+  location / {
+    proxy_pass http://localhost:5179;
+  }
+}
+```
+
+---
+
 ## 🤖 For AI Agents
 
 WAGMIOS is designed to be controlled by AI agents through its API.

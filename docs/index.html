@@ -444,6 +444,7 @@
     <a href="#marketplace">Marketplace</a>
     <a href="#agents">For AI Agents</a>
     <a href="#docker">Docker</a>
+    <a href="#multi-machine">Multi-Machine</a>
     <a href="#architecture">Architecture</a>
   </div>
 </nav>
@@ -742,6 +743,86 @@ docker compose logs -f frontend</code></pre>
   </section>
 
   <hr>
+
+  <section id="multi-machine">
+    <h2>Multi-Machine Management</h2>
+    <p>WAGMIOS isn't just for one machine. Because the API is standard HTTP with an <code>X-API-Key</code> header, any OpenClaw agent that can reach your backend's port can manage that machine's Docker host — from anywhere.</p>
+    <p><strong>The model is simple:</strong> one agent, many machines, each with its own scoped key.</p>
+
+    <div class="mermaid">
+flowchart LR
+    A["🤖 OpenClaw Agent"] -->|"Key A (read+write)\nnas.yourdomain.com:5179"| B["Machine A\nHomelab NAS"]
+    A -->|"Key B (marketplace)\nmedia.yourdomain.com:5179"| C["Machine B\nMedia Server"]
+    A -->|"Key C (images:write)\nvps.yourdomain.com:5179"| D["Machine C\nVPS"]
+    style A fill:#F59E0B,color:#000
+    style B fill:#111318,color:#e8eaf0,stroke:#00ADD8
+    style C fill:#111318,color:#e8eaf0,stroke:#42D392
+    style D fill:#111318,color:#e8eaf0,stroke:#2496ED
+    </div>
+
+    <h3>How It Works</h3>
+    <ol>
+      <li>Install WAGMIOS on each machine you want to manage</li>
+      <li>Each instance gets its own URL and its own set of API keys</li>
+      <li>Your agent holds one key per machine, each with only the scopes that machine needs</li>
+      <li>The agent can't cross machines, can't escalate its own permissions, and every action is logged in each instance's activity feed</li>
+    </ol>
+
+    <div class="callout">
+      <p>💡 <strong>Each WAGMIOS instance is fully independent.</strong> There is no shared state, no cluster, no sync between instances. Each deployment is standalone.</p>
+    </div>
+
+    <h3>Skill Setup</h3>
+    <p>Give your agent one key per machine and label them clearly. Each key lives in your agent's skill config:</p>
+    <pre><code>wagmios_instances:
+  nas:
+    url: http://192.168.1.10:5179
+    key: wag_live_xxxxxxxxxxxx
+    scopes: [containers:read, containers:write]
+    label: "Homelab NAS"
+
+  media:
+    url: http://192.168.1.20:5179
+    key: wag_live_yyyyyyyyyyyy
+    scopes: [marketplace:read, marketplace:write]
+    label: "Media Server"
+
+  vps:
+    url: https://vps.yourdomain.com:5179
+    key: wag_live_zzzzzzzzzzzz
+    scopes: [containers:read, images:write]
+    label: "VPS"</code></pre>
+
+    <p>The agent knows which URL to hit for which machine — and the scope system ensures it can only do what you've explicitly allowed on each one.</p>
+
+    <h3>Security: Network Exposure</h3>
+    <p>WAGMIOS binds to all interfaces (<code>0.0.0.0</code>) by default. That's fine on a trusted LAN — but if you're exposing it beyond your local network, take these steps:</p>
+
+    <table>
+      <tr><th>Environment</th><th>What to do</th></tr>
+      <tr><td>Local LAN only</td><td>No extra steps. Keep port 5179 firewalled from the internet.</td></tr>
+      <tr><td>Internet / VPN</td><td>Put a reverse proxy in front and terminate TLS. Never send API keys over plain HTTP outside your LAN.</td></tr>
+    </table>
+
+    <div class="callout">
+      <p>🔐 <strong>Treat your WAGMIOS API key like an SSH key.</strong> Over a trusted LAN it's fine. Over the open internet, always use TLS.</p>
+    </div>
+
+    <p><strong>Caddy (automatic HTTPS):</strong></p>
+    <pre><code>wagmios.yourdomain.com {
+  reverse_proxy localhost:5179
+}</code></pre>
+
+    <p><strong>Nginx:</strong></p>
+    <pre><code>server {
+  listen 443 ssl;
+  server_name wagmios.yourdomain.com;
+
+  location / {
+    proxy_pass http://localhost:5179;
+  }
+}</code></pre>
+  </section>
 
   <section id="architecture">
     <h2>Architecture</h2>
