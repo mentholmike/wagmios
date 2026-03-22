@@ -22,7 +22,19 @@ RUN go build -o wagmios ./cmd/server/
 # Runtime stage
 FROM alpine:3.19
 
-RUN apk add --no-cache docker-cli docker-cli-compose ca-certificates
+RUN apk add --no-cache ca-certificates curl && \
+    mkdir -p /tmp/docker-install && \
+    echo '#!/bin/sh' > /tmp/docker-install/install.sh && \
+    echo 'ARCH=`uname -m`' >> /tmp/docker-install/install.sh && \
+    echo 'if [ "$ARCH" = "x86_64" ]; then DOCKER_ARCH="x86_64"; elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then DOCKER_ARCH="aarch64"; else echo "Unsupported: $ARCH"; exit 1; fi' >> /tmp/docker-install/install.sh && \
+    echo 'curl -fsSL "https://download.docker.com/linux/static/stable/$DOCKER_ARCH/docker-27.5.1.tgz" | tar -xzf - -C /usr/local/bin --strip-components=1 docker/docker' >> /tmp/docker-install/install.sh && \
+    echo 'curl -fsSL "https://github.com/docker/compose/releases/download/v2.30.3/docker-compose-linux-$DOCKER_ARCH" -o /usr/local/bin/docker-compose' >> /tmp/docker-install/install.sh && \
+    echo 'mkdir -p /usr/local/lib/docker/cli-plugins' >> /tmp/docker-install/install.sh && \
+    echo 'cp /usr/local/bin/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose' >> /tmp/docker-install/install.sh && \
+    echo 'chmod +x /usr/local/bin/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose' >> /tmp/docker-install/install.sh && \
+    chmod +x /tmp/docker-install/install.sh && \
+    /tmp/docker-install/install.sh && \
+    rm -rf /tmp/docker-install
 
 WORKDIR /app
 
