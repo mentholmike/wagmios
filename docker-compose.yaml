@@ -25,7 +25,7 @@ services:
     volumes:
       - wagmios_data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOME}/.wagmios/containers:/app/data/containers
+      - ${WAGMIOS_HOST_PATH:-./data}/containers:/app/data/containers
     environment:
       - PORT=5179
       - WAGMIOS_DATA_DIR=/app/data
