@@ -266,15 +266,41 @@ Marketplace apps are stored in `~/.wagmios/containers/` on the host.
 
 ---
 
-## 🏗️ Tech Stack
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    A["🤖 OpenClaw Agent"] -->|X-API-Key| B["Go API<br/>:5179"]
+    B -->|scope check| C["Docker Socket<br/>/var/run/docker.sock"]
+    C -->|events| B
+    B <-->|WebSocket| D["Vue UI<br/>:5174"]
+    D -->|user actions| B
+
+    subgraph Backend
+    B --> E[middleware]
+    B --> F[scope enforcement]
+    B --> G[marketplace handler]
+    B --> H[Docker socket proxy]
+    end
+
+    subgraph Data
+    I["JSON flat-file<br/>wagmios_data volume"]
+    E --> I
+    F --> I
+    end
+```
+
+### Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | **Backend** | Go (`net/http`, `gorilla/mux`) |
 | **Frontend** | Vue 3 + Vite + TypeScript |
-| **Database** | JSON files (keys, settings) |
+| **Database** | JSON flat-files (keys, settings) |
 | **Container Runtime** | Docker (via socket) |
 | **UI** | TailwindCSS, custom dark mode |
+
+See the [full tech stack page](https://wiki.wagmilabs.fun/stack.html) for dependencies, versions, and scope system reference.
 
 ---
 

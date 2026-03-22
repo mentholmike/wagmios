@@ -390,12 +390,23 @@
     
     .callout p { margin: 0; }
     
+    .mermaid {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0 24px;
+      overflow-x: auto;
+    }
+
     @media (max-width: 640px) {
       .hero h1 { font-size: 32px; }
       header .links { display: none; }
       .cards { grid-template-columns: 1fr; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
 </head>
 <body>
 
@@ -434,7 +445,6 @@
     <a href="#agents">For AI Agents</a>
     <a href="#docker">Docker</a>
     <a href="#architecture">Architecture</a>
-    <a href="stack.html">Tech Stack</a>
   </div>
 </nav>
 
@@ -735,7 +745,29 @@ docker compose logs -f frontend</code></pre>
 
   <section id="architecture">
     <h2>Architecture</h2>
-    
+
+    <div class="mermaid">
+flowchart LR
+    A["🤖 OpenClaw Agent"] -->|X-API-Key| B["Go API<br/>:5179"]
+    B -->|scope check| C["Docker Socket<br/>/var/run/docker.sock"]
+    C -->|events| B
+    B <-->|WebSocket| D["Vue UI<br/>:5174"]
+    D -->|user actions| B
+
+    subgraph Backend
+    B --> E[middleware]
+    B --> F[scope enforcement]
+    B --> G[marketplace handler]
+    B --> H[Docker socket proxy]
+    end
+
+    subgraph Data
+    I["JSON flat-file<br/>wagmios_data volume"]
+    E --> I
+    F --> I
+    end
+    </div>
+
     <table>
       <tr><th>Layer</th><th>Technology</th></tr>
       <tr><td>Backend</td><td>Go (net/http, gorilla/mux)</td></tr>
@@ -745,25 +777,8 @@ docker compose logs -f frontend</code></pre>
       <tr><td>Container Runtime</td><td>Docker (via socket)</td></tr>
       <tr><td>Activity Feed</td><td>WebSocket</td></tr>
     </table>
-    
-    <h3>Project Structure</h3>
-    <pre><code>wagmios/
-├── backend-go/           # Go API server
-│   └── internal/
-│       ├── api/          # Container/image endpoints
-│       ├── auth/          # Key store, middleware, scopes
-│       ├── marketplace/   # App catalog and install handlers
-│       └── activity/     # WebSocket activity feed
-├── frontend/            # Vue.js UI
-│   └── src/
-│       ├── components/   # Vue components
-│       ├── api.ts        # API client
-│       └── App.vue       # Main app
-├── docs/                 # This wiki (GitHub Pages)
-├── logo/                 # Project logos
-├── docker-compose.yaml
-├── Dockerfile.backend
-└── Dockerfile.frontend</code></pre>
+
+    <p>See the <a href="stack.html">full tech stack breakdown</a> for dependencies, versions, and the complete scope system reference.</p>
   </section>
 
 </div>
