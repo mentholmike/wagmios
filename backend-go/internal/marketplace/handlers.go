@@ -323,9 +323,7 @@ func BuildCompose(tmpl *AppTemplate, req CreateRequest) string {
 		serviceName = strings.ReplaceAll(strings.ToLower(req.CustomName), " ", "-")
 	}
 
-	compose := fmt.Sprintf(`version: '3.8'
-
-services:
+	compose := fmt.Sprintf(`services:
   %s:
     image: %s
 `, serviceName, tmpl.Image)

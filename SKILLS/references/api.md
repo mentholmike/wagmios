@@ -296,7 +296,7 @@ Required Scope: templates:write
 Body:
 {
   "name": "my-template",
-  "compose": "version: '3.8'\n\nservices:\n  my-app:\n    image: nginx:alpine\n..."
+  "compose": "services:\n  my-app:\n    image: nginx:alpine\n..."
 }
 ```
 Saves a compose template for reuse.
