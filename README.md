@@ -1,4 +1,4 @@
-# <img src="logo/removed-background.png" height="48" align="middle" /> WAGMIOS
+# <img src="logo/removed-background.png" height="48" align="middle" /> Wagmios[![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
 ### Give your agent a homelab
 
@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed.svg?logo=docker)](https://www.docker.com/)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg?logo=go)](https://golang.org/)
 
-**WAGMIOS** is a self-hosted Docker management platform built native for **OpenClaw agents**. Give your agent a scoped API key and it can manage your homelab — install apps, start/stop containers, pull images — with every action visible and auditable. Scope = permission. No sudo, no daemon access, just the exact access you grant.
+**WAGMIOS** is a self-hosted Docker management platform built native for **OpenClaw agents**. Give your agent a scoped API key and it can manage your homelab  --  install apps, start/stop containers, pull images  --  with every action visible and auditable. Scope = permission. No sudo, no daemon access, just the exact access you grant.
 
 > **Think of it as your homelab's command center.** Built for folks who want the power of Docker without memorizing every CLI flag.
 
@@ -14,17 +14,17 @@
 
 ## ✨ What It Does
 
-- **🚀 One-Click Apps** — Install 34+ self-hosted apps from the [WAGMIOS Marketplace](https://marketplace.wagmilabs.fun) in seconds. Plex, Jellyfin, Ollama, Home Assistant, and more.
-- **🐳 Container Management** — List, create, start, stop, restart, and delete containers through a clean REST API.
-- **🔐 Scope-Based Permissions** — Give AI agents exactly the permissions they need. Nothing blanket. If the key doesn't have `containers:delete`, the agent can't delete anything.
-- **🤖 OpenClaw-Native** — Built for OpenClaw agents. Every action is visible and auditable.
-- **⚡ Real-Time Activity** — WebSocket-powered activity feed shows you everything happening in your homelab.
+- WAGMIOS Marketplace  --  Install 34+ self-hosted apps in seconds. Plex, Jellyfin, Ollama, Home Assistant, and more.
+- Container Management  --  List, create, start, stop, restart, and delete containers through a clean REST API.
+- Scope-Based Permissions  --  Give AI agents exactly the permissions they need. Nothing blanket. If the key doesn't have `containers:delete`, the agent can't delete anything.
+- OpenClaw-Native  --  Built for OpenClaw agents. Every action is visible and auditable.
+- Real-Time Activity  --  WebSocket-powered activity feed shows you everything happening in your homelab.
 
 ---
 
 ## 🏃 Quick Start
 
-### Option 1 — Pull from Docker Hub (Recommended)
+### Option 1  --  Pull from Docker Hub (Recommended)
 
 No build step. Images are pre-built for both x86_64 and ARM64.
 
@@ -36,7 +36,7 @@ curl -O https://raw.githubusercontent.com/mentholmike/wagmios/main/docker-compos
 docker compose up -d
 ```
 
-### Option 2 — Build from Source
+### Option 2  --  Build from Source
 
 Clone the repo and build locally with Docker.
 
@@ -46,15 +46,13 @@ cd wagmios
 docker compose up -d --build
 ```
 
-> **Note:** Building from source requires Docker on your machine. On ARM64 (Apple Silicon, ARM Linux) no extra setup is needed — the images build for both architectures automatically.
+> **Note:** Building from source requires Docker on your machine. On ARM64 (Apple Silicon, ARM Linux) no extra setup is needed  --  the images build for both architectures automatically.
 
 ### 3. Open the UI
 
-| Service | URL |
-|---------|-----|
-| **Frontend** | http://localhost:5174 |
-| **Backend API** | http://localhost:5179 |
-| **Health** | http://localhost:5179/health |
+- Frontend  --  http://localhost:5174
+- Backend API  --  http://localhost:5179
+- Health  --  http://localhost:5179/health
 
 ### 4. Get Your API Key
 
@@ -67,7 +65,7 @@ On first launch, the Setup Wizard walks you through:
 
 ## 🔑 The Scope System Explained
 
-Every WAGMIOS API key has **scopes** — granular permissions that control exactly what an agent can do.
+Every WAGMIOS API key has **scopes**  --  granular permissions that control exactly what an agent can do.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -89,7 +87,7 @@ Every WAGMIOS API key has **scopes** — granular permissions that control exact
 
 ## 🌐 Multi-Machine Management
 
-WAGMIOS isn't just for one machine. Because the API is standard HTTP with an `X-API-Key` header, any OpenClaw agent that can reach your backend's port can manage that machine's Docker host — from anywhere.
+WAGMIOS isn't just for one machine. Because the API is standard HTTP with an `X-API-Key` header, any OpenClaw agent that can reach your backend's port can manage that machine's Docker host  --  from anywhere.
 
 **The model is simple:** one agent, many machines, each with its own scoped key.
 
@@ -102,7 +100,7 @@ WAGMIOS isn't just for one machine. Because the API is standard HTTP with an `X-
 
 > **Each WAGMIOS instance is fully independent.** There is no shared state, no cluster, no sync between instances. Each deployment is standalone.
 
-### One Agent. Multiple Machines.
+### One Agent. Multiple Machines
 
 ```mermaid
 flowchart LR
@@ -153,16 +151,14 @@ wagmios_instances:
     label: "VPS"
 ```
 
-The agent knows which URL to hit for which machine — and the scope system ensures it can only do what you've explicitly allowed on each one.
+The agent knows which URL to hit for which machine  --  and the scope system ensures it can only do what you've explicitly allowed on each one.
 
 ### Security: Network Exposure
 
-WAGMIOS binds to all interfaces (`0.0.0.0`) by default. That's fine on a trusted LAN — but if you're exposing it beyond your local network, follow these steps first:
+WAGMIOS binds to all interfaces (`0.0.0.0`) by default. That's fine on a trusted LAN  --  but if you're exposing it beyond your local network, follow these steps first:
 
-| Environment | What to do |
-|-------------|-------------|
-| **Local LAN only** | No extra steps. Keep port 5179 firewalled from the internet. |
-| **Internet / VPN** | Put a reverse proxy in front and terminate TLS there. Never send API keys over plain HTTP outside your LAN. |
+- Local LAN only  --  No extra steps. Keep port 5179 firewalled from the internet.
+- Internet / VPN  --  Put a reverse proxy in front and terminate TLS there. Never send API keys over plain HTTP outside your LAN.
 
 **Treat your WAGMIOS API key like an SSH key.** Over a trusted LAN it's fine. Over the open internet, always use TLS.
 
@@ -219,54 +215,47 @@ Agent: *deletes the container* → "Done. Container deleted."
 
 ## 🏪 WAGMIOS Marketplace
 
-Browse 34+ pre-configured apps at [marketplace.wagmilabs.fun](https://marketplace.wagmilabs.fun) or directly in the app.
+Browse 34+ pre-configured apps at marketplace.wagmilabs.fun or directly in the app.
 
 ### Media & Entertainment
-| App | Port | What It Is |
-|-----|------|------------|
-| Plex | 32400 | Stream movies, TV, music to any device |
-| Jellyfin | 8096 | Free, open-source media server |
-| Immich | 2283 | Self-hosted photo backup from your phone |
+
+- Plex  --  Port 32400. Stream movies, TV, music to any device
+- Jellyfin  --  Port 8096. Free, open-source media server
+- Immich  --  Port 2283. Self-hosted photo backup from your phone
 
 ### Home Automation
-| App | Port | What It Is |
-|-----|------|------------|
-| Home Assistant | 8123 | Open source smart home platform |
+
+- Home Assistant  --  Port 8123. Open source smart home platform
 
 ### AI & Local Models
-| App | Port | What It Is |
-|-----|------|------------|
-| Ollama | 11434 | Run Llama, Mistral, and other open-source AI models locally |
-| Open WebUI | 8080 | Chat interface for Ollama |
+
+- Ollama  --  Port 11434. Run LLaMA, Mistral, and other open-source AI models locally
+- Open WebUI  --  Port 8080. Chat interface for Ollama
 
 ###arr Stack
-| App | Port | What It Is |
-|-----|------|------------|
-| Sonarr | 8989 | Automatically download TV shows |
-| Radarr | 7878 | Automatically download movies |
-| Prowlarr | 9696 | Manage all your torrent indexers in one place |
+
+- Sonarr  --  Port 8989. Automatically download TV shows
+- Radarr  --  Port 7878. Automatically download movies
+- Prowlarr  --  Port 9696. Manage all your torrent indexers in one place
 
 ### Monitoring
-| App | Port | What It Is |
-|-----|------|------------|
-| Uptime Kuma | 3001 | Beautiful server monitoring dashboard |
-| Grafana | 3000 | Visualize metrics and logs |
-| Prometheus | 9090 | Time series database for metrics |
+
+- Uptime Kuma  --  Port 3001. Beautiful server monitoring dashboard
+- Grafana  --  Port 3000. Visualize metrics and logs
+- Prometheus  --  Port 9090. Time series database for metrics
 
 ### Security
-| App | Port | What It Is |
-|-----|------|------------|
-| Vaultwarden | 80 | Self-hosted Bitwarden password manager |
+
+- Vaultwarden  --  Port 80. Self-hosted Bitwarden password manager
 
 ### Networking
-| App | Port | What It Is |
-|-----|------|------------|
-| Nginx | 80 | Web server and reverse proxy |
-| Pi-hole | 80 | Block ads network-wide |
-| AdGuard Home | 3000 | DNS-level ad blocking |
-| WireGuard | 51820 | Fast, modern VPN |
 
-### And More...
+- Nginx  --  Port 80. Web server and reverse proxy
+- Pi-hole  --  Port 80. Block ads network-wide
+- AdGuard Home  --  Port 3000. DNS-level ad blocking
+- WireGuard  --  Port 51820. Fast, modern VPN |
+
+### And More
 Transmission, qBittorrent, Nextcloud, Filebrowser, Minecraft, n8n, RSSHub, and more.
 
 ---
@@ -279,37 +268,29 @@ Transmission, qBittorrent, Nextcloud, Filebrowser, Minecraft, n8n, RSSHub, and m
 
 ### Containers
 
-| Method | Endpoint | Scope Required |
-|--------|----------|---------------|
-| List | `GET /api/containers` | `containers:read` |
-| Logs | `GET /api/containers/{id}/logs` | `containers:read` |
-| Start | `POST /api/containers/{id}/start` | `containers:write` |
-| Stop | `POST /api/containers/{id}/stop` | `containers:write` |
-| Restart | `POST /api/containers/{id}/restart` | `containers:write` |
-| Delete | `DELETE /api/containers/{id}/delete` | `containers:delete` |
+- List  --  `GET /api/containers`  --  requires `containers:read`
+- Logs  --  `GET /api/containers/{id}/logs`  --  requires `containers:read`
+- Start  --  `POST /api/containers/{id}/start`  --  requires `containers:write`
+- Stop  --  `POST /api/containers/{id}/stop`  --  requires `containers:write`
+- Restart  --  `POST /api/containers/{id}/restart`  --  requires `containers:write`
+- Delete  --  `DELETE /api/containers/{id}/delete`  --  requires `containers:delete`
 
 ### Images
 
-| Method | Endpoint | Scope Required |
-|--------|----------|---------------|
-| List | `GET /api/images` | `images:read` |
-| Pull | `POST /api/images/pull` | `images:write` |
-| Delete | `DELETE /api/images/{id}` | `images:write` |
+- List  --  `GET /api/images`  --  requires `images:read`
+- Pull  --  `POST /api/images/pull`  --  requires `images:write`
+- Delete  --  `DELETE /api/images/{id}`  --  requires `images:write`
 
 ### Marketplace
 
-| Method | Endpoint | Scope Required |
-|--------|----------|---------------|
-| Browse | `GET /api/marketplace` | `marketplace:read` |
-| Install | `POST /api/marketplace/create` | `marketplace:write` |
-| Start | `POST /api/marketplace/start` | `marketplace:write` |
+- Browse  --  `GET /api/marketplace`  --  requires `marketplace:read`
+- Install  --  `POST /api/marketplace/create`  --  requires `marketplace:write`
+- Start  --  `POST /api/marketplace/start`  --  requires `marketplace:write`
 
 ### Auth
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| Status | `GET /api/auth/status` | Check key scopes |
-| Settings | `GET /api/settings` | Key metadata |
+- Status  --  `GET /api/auth/status`  --  Check key scopes
+- Settings  --  `GET /api/settings`  --  Key metadata
 
 ---
 
@@ -349,20 +330,16 @@ docker compose up -d --build
 
 WAGMIOS uses named Docker volumes:
 
-| Volume | What It Stores |
-|--------|---------------|
-| `wagmios_data` | API keys, settings, app data |
-| `frontend_data` | Frontend assets |
+- wagmios_data -- API keys, settings, app data
+- frontend_data -- Frontend assets
 
 Marketplace apps are stored in `~/.wagmios/containers/` on the host.
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `5179` | Backend port |
-| `WAGMIOS_DATA_DIR` | `/app/data` | Data directory |
-| `VITE_API_URL` | — | Frontend → Backend URL (auto-set in compose) |
+- PORT -- Default: 5179 -- Backend port
+- WAGMIOS_DATA_DIR -- Default: /app/data -- Data directory
+- VITE_API_URL -- Frontend to Backend URL (auto-set in compose)
 
 ---
 
@@ -392,13 +369,11 @@ flowchart LR
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Backend** | Go (`net/http`, `gorilla/mux`) |
-| **Frontend** | Vue 3 + Vite + TypeScript |
-| **Database** | JSON flat-files (keys, settings) |
-| **Container Runtime** | Docker (via socket) |
-| **UI** | TailwindCSS, custom dark mode |
+- Backend  --  Go (`net/http`, `gorilla/mux`)
+- Frontend  --  Vue 3 + Vite + TypeScript
+- Database  --  JSON flat-files (keys, settings)
+- Container Runtime  --  Docker (via socket)
+- UI  --  Tailwind CSS, custom dark mode
 
 See the [full tech stack page](https://wiki.wagmilabs.fun/stack.html) for dependencies, versions, and scope system reference.
 
@@ -434,13 +409,13 @@ Contributions welcome! Whether it's:
 - Suggesting a new marketplace app
 - Submitting a PR
 
-Open an issue or PR on [GitHub](https://github.com/mentholmike/wagmios).
+Open an issue or PR on GitHub.
 
 ---
 
 ## 📄 License
 
-MIT License — do what you want with it.
+MIT License  --  do what you want with it.
 
 ---
 
@@ -461,20 +436,16 @@ The skill tells your agent how to:
 
 > **Your agent needs an API key with the right scopes to use WAGMIOS.** The skill will guide key setup on first use.
 
-**Skill URL:** https://clawhub.ai/mentholmike/wagmios
-
 ---
 
 ## 🔗 Links
 
-| Resource | URL |
-|---------|-----|
-| **Main Repo** | https://github.com/mentholmike/wagmios |
-| **Marketplace** | https://marketplace.wagmilabs.fun |
-| **Documentation** | https://wiki.wagmilabs.fun |
-| **OpenClaw Skill** | https://clawhub.ai/mentholmike/wagmios |
-| **Docker Hub** | https://hub.docker.com/r/itzmizzle/wagmi |
-| **Issues** | https://github.com/mentholmike/wagmios/issues |
+- Main Repo  --  https://github.com/mentholmike/wagmios
+- Marketplace  --  https://marketplace.wagmilabs.fun
+- Documentation  --  https://wiki.wagmilabs.fun
+- OpenClaw Skill  --  https://clawhub.ai/mentholmike/wagmios
+- Docker Hub  --  https://hub.docker.com/r/itzmizzle/wagmi
+- Issues  --  https://github.com/mentholmike/wagmios/issues
 
 ---
 
