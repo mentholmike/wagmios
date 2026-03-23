@@ -468,7 +468,7 @@ The skill tells your agent how to:
 ## 🔗 Links
 
 | Resource | URL |
-|----------|-----|
+|---------|-----|
 | **Main Repo** | https://github.com/mentholmike/wagmios |
 | **Marketplace** | https://marketplace.wagmilabs.fun |
 | **Documentation** | https://wiki.wagmilabs.fun |
