@@ -1,4 +1,4 @@
-# <img src="logo/removed-background.png" height="48" align="middle" /> Wagmios[![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
+# <img src="logo/removed-background.png" height="48" align="middle" /> Wagmios
 
 ### Give your agent a homelab
 
