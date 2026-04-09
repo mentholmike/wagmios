@@ -26,6 +26,9 @@
     <!-- Setup Wizard -->
     <SetupWizard v-if="showWizard" :isDarkMode="isDarkMode" @complete="onWizardComplete" />
 
+    <!-- Key Entry (when no key in browser) -->
+    <KeyEntry v-else-if="showKeyEntry" :isDarkMode="isDarkMode" @success="onKeyEntrySuccess" />
+
     <!-- Main Dashboard -->
     <main v-else class="relative z-10 px-6 pb-8 max-w-3xl mx-auto">
       <!-- API Key -->
@@ -199,6 +202,7 @@ import Background3D from './components/Background3D.vue'
 import Settings from './components/Settings.vue'
 import ActivityFeed from './components/ActivityFeed.vue'
 import SetupWizard from './components/SetupWizard.vue'
+import KeyEntry from './components/KeyEntry.vue'
 import AddLinkModal from './components/AddLinkModal.vue'
 import MetricsDashboard from './components/MetricsDashboard.vue'
 import { client, type KeyMeta } from './api'
@@ -214,6 +218,7 @@ const toggleTheme = () => {
 
 // Auth
 const showWizard = ref(false)
+const showKeyEntry = ref(false)
 const keyMeta = ref<KeyMeta | null>(null)
 
 async function checkAuth() {
@@ -222,6 +227,10 @@ async function checkAuth() {
     if (res.success) {
       showWizard.value = res.data.wizard_required
       if (res.data.meta) keyMeta.value = res.data.meta
+      // If setup is done but no key in localStorage, show key entry
+      if (!res.data.wizard_required && !client.getApiKey()) {
+        showKeyEntry.value = true
+      }
     }
   } catch {
     showWizard.value = true
@@ -230,6 +239,11 @@ async function checkAuth() {
 
 function onWizardComplete() {
   showWizard.value = false
+  checkAuth()
+}
+
+function onKeyEntrySuccess() {
+  showKeyEntry.value = false
   checkAuth()
 }
 
@@ -319,7 +333,9 @@ onUnmounted(() => {
 })
 
 function onAuthFailed() {
-  showWizard.value = true
+  // If keys exist but ours is invalid, show key entry (not setup wizard)
+  client.clearApiKey()
+  showKeyEntry.value = true
   showSettings.value = false
 }
 </script>
