@@ -240,7 +240,7 @@ const keys = ref<KeyListEntry[]>([])
 const showCreateKey = ref(false)
 const newKeyLabel = ref('')
 const newKeyRole = ref<string>('agent')
-const newKeyScopes = ref<Set<string>>(new Set(['containers:read', 'containers:write', 'images:read', 'images:write', 'marketplace:read']))
+const newKeyScopes = ref<Set<string>>(new Set(['containers:read', 'containers:write', 'images:read', 'images:write', 'marketplace:read', 'system:read']))
 const creatingKey = ref(false)
 const createKeyError = ref('')
 const createdKey = ref('')
@@ -256,6 +256,9 @@ const allScopes = [
   { value: 'templates:write', label: 'templates:write', description: 'Create and edit templates' },
   { value: 'marketplace:read', label: 'marketplace:read', description: 'Browse the app marketplace' },
   { value: 'marketplace:write', label: 'marketplace:write', description: 'Install and manage marketplace apps' },
+  { value: 'secrets:write', label: 'secrets:write', description: 'Manage Docker secrets and credentials' },
+  { value: 'system:read', label: 'system:read', description: 'View system metrics and information' },
+  { value: 'keys:write', label: 'keys:write', description: 'Create, list, and revoke API keys' },
 ]
 
 const selectedScopes = ref<Set<string>>(new Set())

@@ -193,6 +193,9 @@ const scopeGroups = ref([
   { group: 'templates:write', description: 'Create and edit container templates', enabled: true },
   { group: 'marketplace:read', description: 'Browse the app marketplace', enabled: true },
   { group: 'marketplace:write', description: 'Install and manage marketplace apps', enabled: true },
+  { group: 'secrets:write', description: 'Manage Docker secrets and credentials', enabled: false },
+  { group: 'system:read', description: 'View system metrics and information', enabled: true },
+  { group: 'keys:write', description: 'Create, list, and revoke API keys (admin only)', enabled: true },
 ])
 
 const enabledScopes = computed(() =>

@@ -47,10 +47,10 @@ func RegisterAuthHandlers(r *mux.Router, ks *KeyStore) {
 	r.HandleFunc("/api/auth/verify", handleVerify(ks)).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/auth/status", handleStatus(ks)).Methods("GET", "OPTIONS")
 
-	// Key management endpoints — require auth + keys:write scope for creating/listing/revoking
-	r.HandleFunc("/api/keys", requireAuthAndScope(ks, ScopeKeysWrite, handleListKeys(ks))).Methods("GET", "OPTIONS")
-	r.HandleFunc("/api/keys", requireAuthAndScope(ks, ScopeKeysWrite, handleCreateKey(ks))).Methods("POST", "OPTIONS")
-	r.HandleFunc("/api/keys/{id}", requireAuthAndScope(ks, ScopeKeysWrite, handleRevokeKey(ks))).Methods("DELETE", "OPTIONS")
+	// Key management endpoints — admin only (role check in handlers, not scope check)
+	r.HandleFunc("/api/keys", requireAuth(ks, handleListKeys(ks))).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/keys", requireAuth(ks, handleCreateKey(ks))).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/keys/{id}", requireAuth(ks, handleRevokeKey(ks))).Methods("DELETE", "OPTIONS")
 
 	// Settings endpoints — require auth + self-scope-escalation check
 	r.HandleFunc("/api/settings/scopes", requireAuth(ks, handleUpdateScopes(ks))).Methods("POST", "OPTIONS")
@@ -187,9 +187,14 @@ func handleStatus(ks *KeyStore) http.HandlerFunc {
 	}
 }
 
-// handleListKeys returns all keys (admin only, keys:write scope required)
+// handleListKeys returns all keys (admin only)
 func handleListKeys(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, caller *KeyMeta) {
 	return func(w http.ResponseWriter, r *http.Request, caller *KeyMeta) {
+		if caller.Role != RoleAdmin {
+			writeError(w, http.StatusForbidden, "ADMIN_REQUIRED", "Only admin keys can list keys")
+			return
+		}
+
 		keys := ks.ListKeys()
 
 		// Sanitize — don't expose full hashes
@@ -282,7 +287,7 @@ func handleCreateKey(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-// handleRevokeKey deletes a key by ID
+// handleRevokeKey deletes a key by ID (admin only)
 func handleRevokeKey(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, caller *KeyMeta) {
 	return func(w http.ResponseWriter, r *http.Request, caller *KeyMeta) {
 		// Only admin keys can revoke keys
