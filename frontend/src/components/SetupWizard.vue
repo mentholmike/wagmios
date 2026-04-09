@@ -66,7 +66,7 @@
               Choose what your API key allows agents to do:
             </p>
 
-            <div class="space-y-2">
+            <div class="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
               <label v-for="scope in scopeGroups" :key="scope.group"
                 :class="['flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all', isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50']">
                 <input type="checkbox" v-model="scope.enabled" class="mt-1 w-4 h-4 rounded accent-blue-500" />
