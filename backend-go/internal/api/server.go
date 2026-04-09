@@ -354,7 +354,7 @@ func (s *Server) handleContainerStart(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	meta := getMeta(r)
 
-	if !s.keyStore.HasScope(auth.ScopeContainersWrite) {
+	if !auth.KeyStoreHasScope(meta, auth.ScopeContainersWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:write scope required"})
 		return
 	}
@@ -375,7 +375,7 @@ func (s *Server) handleContainerStop(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	meta := getMeta(r)
 
-	if !s.keyStore.HasScope(auth.ScopeContainersWrite) {
+	if !auth.KeyStoreHasScope(meta, auth.ScopeContainersWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:write scope required"})
 		return
 	}
@@ -396,7 +396,7 @@ func (s *Server) handleContainerRestart(w http.ResponseWriter, r *http.Request) 
 	id := mux.Vars(r)["id"]
 	meta := getMeta(r)
 
-	if !s.keyStore.HasScope(auth.ScopeContainersWrite) {
+	if !auth.KeyStoreHasScope(meta, auth.ScopeContainersWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:write scope required"})
 		return
 	}
@@ -418,8 +418,8 @@ func (s *Server) handleContainerDelete(w http.ResponseWriter, r *http.Request) {
 	meta := getMeta(r)
 	agent := agentFromMeta(meta)
 
-	// Check if key has delete scope
-	if !s.keyStore.HasScope(auth.ScopeContainersDelete) {
+	// Check if the requesting key has delete scope
+	if !auth.KeyStoreHasScope(meta, auth.ScopeContainersDelete) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:delete scope required"})
 		return
 	}
@@ -490,7 +490,7 @@ func (s *Server) handleCreateContainer(w http.ResponseWriter, r *http.Request) {
 	meta := getMeta(r)
 	agent := agentFromMeta(meta)
 
-	if !s.keyStore.HasScope(auth.ScopeContainersWrite) {
+	if !auth.KeyStoreHasScope(meta, auth.ScopeContainersWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:write scope required"})
 		return
 	}
@@ -572,7 +572,7 @@ func (s *Server) handlePullImage(w http.ResponseWriter, r *http.Request) {
 	meta := getMeta(r)
 	agent := agentFromMeta(meta)
 
-	if !s.keyStore.HasScope(auth.ScopeImagesWrite) {
+	if !auth.KeyStoreHasScope(meta, auth.ScopeImagesWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "images:write scope required"})
 		return
 	}
@@ -597,7 +597,7 @@ func (s *Server) handleDeleteImage(w http.ResponseWriter, r *http.Request) {
 	meta := getMeta(r)
 	agent := agentFromMeta(meta)
 
-	if !s.keyStore.HasScope(auth.ScopeImagesWrite) {
+	if !auth.KeyStoreHasScope(meta, auth.ScopeImagesWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "images:write scope required"})
 		return
 	}
@@ -659,7 +659,8 @@ func (s *Server) handleSaveTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !s.keyStore.HasScope(auth.ScopeTemplatesWrite) {
+	meta := getMeta(r)
+	if !auth.KeyStoreHasScope(meta, auth.ScopeTemplatesWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "templates:write scope required"})
 		return
 	}
@@ -711,7 +712,8 @@ func (s *Server) handleInstallContainer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if !s.keyStore.HasScope(auth.ScopeMarketplaceWrite) {
+	meta := getMeta(r)
+	if !auth.KeyStoreHasScope(meta, auth.ScopeMarketplaceWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "marketplace:write scope required"})
 		return
 	}
