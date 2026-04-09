@@ -23,6 +23,10 @@ export const AUTH_VERIFY_URL = `${API_BASE_URL}/auth/verify`;
 export const SETTINGS_URL = `${API_BASE_URL}/settings`;
 export const SETTINGS_SCOPES_URL = `${API_BASE_URL}/settings/scopes`;
 
+// Keys
+export const KEYS_URL = `${API_BASE_URL}/keys`;
+export const KEY_BY_ID_URL = (id: string) => `${API_BASE_URL}/keys/${id}`;
+
 // Containers
 export const CONTAINERS_URL = `${API_BASE_URL}/containers`;
 export const CONTAINER_BY_ID_URL = (id: string) => `${API_BASE_URL}/containers/${id}`;
@@ -43,10 +47,6 @@ export const SYSTEM_INFO_URL = `${API_BASE_URL}/system/info`;
 export const ACTIVITY_URL = `${API_BASE_URL}/activity`;
 export const ACTIVITY_WS_URL = `${WS_BASE_URL}/api/ws/activity`;
 
-// Approvals
-
-// System Settings
-
 // Marketplace
 export const MARKETPLACE_URL = `${API_BASE_URL}/marketplace`;
 export const MARKETPLACE_INSTALL_URL = `${API_BASE_URL}/marketplace/install`;
@@ -62,21 +62,32 @@ export interface ApiResponse<T = any> {
   error: { code: string; message: string } | null;
 }
 
-export interface AuthStatus {
-  wizard_required: boolean;
-  has_key: boolean;
-  meta?: KeyMeta;
-}
-
 export interface KeyMeta {
   id: string;
   key_prefix: string;
   label: string;
+  role: string;
   created_at: string;
   last_used_at: string;
   scopes: string[];
-  rate_limit: number;
-  max_containers: number;
+}
+
+export interface KeyListEntry {
+  id: string;
+  key_prefix: string;
+  label: string;
+  role: string;
+  scopes: string[];
+  created_at: string;
+  last_used_at: string;
+}
+
+export interface AuthStatus {
+  wizard_required: boolean;
+  has_key: boolean;
+  key_count?: number;
+  meta?: KeyMeta;
+  setup_token_available?: boolean;
 }
 
 export interface ActivityEvent {
@@ -98,8 +109,6 @@ export interface Container {
   status: string;
   ports: { host: string; container: string; protocol: string }[];
 }
-
-
 
 class WagmiosClient {
   private apiKey: string | null = null;
@@ -159,10 +168,10 @@ class WagmiosClient {
     return this.request<AuthStatus>(AUTH_STATUS_URL);
   }
 
-  async setupKey(scopes: string[], label: string): Promise<ApiResponse<{ key: string; meta: KeyMeta }>> {
+  async setupKey(scopes: string[], label: string, setupToken?: string): Promise<ApiResponse<{ key: string; meta: KeyMeta }>> {
     const res = await this.request<{ key: string; meta: KeyMeta }>(AUTH_SETUP_URL, {
       method: 'POST',
-      body: JSON.stringify({ scopes, label }),
+      body: JSON.stringify({ scopes, label, setup_token: setupToken }),
     });
     if (res.success && res.data.key) {
       this.setApiKey(res.data.key);
@@ -170,9 +179,26 @@ class WagmiosClient {
     return res;
   }
 
-
   async getSettings(): Promise<ApiResponse<AuthStatus>> {
     return this.request<AuthStatus>(AUTH_STATUS_URL);
+  }
+
+  // Keys
+  async listKeys(): Promise<ApiResponse<KeyListEntry[]>> {
+    return this.request<KeyListEntry[]>(KEYS_URL);
+  }
+
+  async createKey(label: string, scopes: string[], role: string = 'agent'): Promise<ApiResponse<{ key: string; meta: KeyMeta }>> {
+    return this.request<{ key: string; meta: KeyMeta }>(KEYS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ label, scopes, role }),
+    });
+  }
+
+  async revokeKey(id: string): Promise<ApiResponse<{ status: string; id: string }>> {
+    return this.request<{ status: string; id: string }>(KEY_BY_ID_URL(id), {
+      method: 'DELETE',
+    });
   }
 
   // Containers

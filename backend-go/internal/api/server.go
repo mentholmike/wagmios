@@ -111,7 +111,7 @@ func (s *Server) registerRoutes() {
 		})
 	})
 
-	// Public routes (no auth)
+	// Auth routes (includes /api/keys endpoints for key management)
 	auth.RegisterAuthHandlers(s.router, s.keyStore)
 
 	// Activity/WebSocket routes
@@ -155,9 +155,6 @@ func (s *Server) registerRoutes() {
 	// Proxy image logos
 	s.router.HandleFunc("/api/proxy-image", s.handleProxyImage).Methods("GET", "OPTIONS")
 
-	// Settings routes (auth required — registered via auth package)
-	// (settings routes are in auth/handlers.go)
-
 	// Debug/404
 	s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("404: %s %s", r.Method, r.URL.Path)
@@ -179,24 +176,7 @@ func (s *Server) logRoutes() {
 }
 
 func isPublicPath(path string) bool {
-	public := []string{
-		"/api/auth/setup",
-		"/api/auth/verify",
-		"/api/auth/status",
-		"/api/ws/activity",
-		"/api/system/info",
-		"/api/system/metrics",
-		"/api/metrics/summary",
-		"/api/containers",
-		"/health",
-		"/",
-	}
-	for _, p := range public {
-		if path == p || strings.HasPrefix(path, p+"/") {
-			return true
-		}
-	}
-	return false
+	return auth.IsPublicPath(path)
 }
 
 // ---- Response helpers ----
@@ -217,7 +197,19 @@ func getMeta(r *http.Request) *auth.KeyMeta {
 
 // ---- Container helpers ----
 
-func inspectContainer(id string) map[string]interface{} {
+// containerInspectData represents the structured response from docker inspect.
+// Used instead of raw map[string]interface{} assertions that can panic.
+type containerInspectData struct {
+	ID     string               `json:"id"`
+	Name   string               `json:"name"`
+	Image  string               `json:"image"`
+	Status string               `json:"status"`
+	Ports  []map[string]string  `json:"ports"`
+}
+
+// inspectContainer runs docker inspect and safely extracts container info.
+// Returns nil if the container is not found or data is malformed.
+func inspectContainer(id string) *containerInspectData {
 	cmd := exec.Command("docker", "inspect", id)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -230,15 +222,36 @@ func inspectContainer(id string) map[string]interface{} {
 	}
 
 	c := data[0]
-	return map[string]interface{}{
-		"id":     c["Id"].(string),
-		"name":   strings.TrimPrefix(c["Name"].(string), "/"),
-		"image":  c["Config"].(map[string]interface{})["Image"].(string),
-		"status": c["State"].(map[string]interface{})["Status"].(string),
-		"ports":  extractPorts(c),
+
+	// Safe extraction with fallbacks for each field
+	containerID, _ := c["Id"].(string)
+	name, _ := c["Name"].(string)
+	name = strings.TrimPrefix(name, "/")
+
+	image := ""
+	if cfg, ok := c["Config"].(map[string]interface{}); ok {
+		image, _ = cfg["Image"].(string)
+	}
+
+	status := ""
+	if state, ok := c["State"].(map[string]interface{}); ok {
+		status, _ = state["Status"].(string)
+	}
+
+	if containerID == "" {
+		return nil // essential field missing
+	}
+
+	return &containerInspectData{
+		ID:     containerID,
+		Name:   name,
+		Image:  image,
+		Status: status,
+		Ports:  extractPorts(c),
 	}
 }
 
+// extractPorts safely extracts port mappings from Docker inspect data.
 func extractPorts(c map[string]interface{}) []map[string]string {
 	ports := make([]map[string]string, 0)
 	ns, ok := c["NetworkSettings"].(map[string]interface{})
@@ -259,18 +272,42 @@ func extractPorts(c map[string]interface{}) []map[string]string {
 			if !ok {
 				continue
 			}
-			parts := strings.Split(containerPort, "/")
+			hostPort, _ := bm["HostPort"].(string)
+			parts := strings.SplitN(containerPort, "/", 2)
+			cp := parts[0]
+			proto := "tcp"
+			if len(parts) == 2 {
+				proto = parts[1]
+			}
 			ports = append(ports, map[string]string{
-				"host":      bm["HostPort"].(string),
-				"container": parts[0],
-				"protocol":  parts[1],
+				"host":      hostPort,
+				"container": cp,
+				"protocol":  proto,
 			})
 		}
 	}
 	return ports
 }
 
-// ---- Handlers ----
+// blockedVolumePaths are host paths that must never be mounted into containers.
+// An agent with containers:write should not be able to read /etc/shadow etc.
+var blockedVolumePaths = []string{
+	"/etc", "/root", "/var", "/boot", "/proc", "/sys", "/dev",
+	"/home", "/usr", "/bin", "/sbin", "/lib", "/opt",
+	"/etc/passwd", "/etc/shadow", "/etc/ssh", "/etc/ssl",
+}
+
+// isVolumePathBlocked returns true if a host path is too dangerous to mount.
+func isVolumePathBlocked(hostPath string) bool {
+	// Normalize: remove trailing slash, resolve ./  ../  etc.
+	clean := filepath.Clean(hostPath)
+	for _, blocked := range blockedVolumePaths {
+		if clean == blocked || strings.HasPrefix(clean, blocked+"/") {
+			return true
+		}
+	}
+	return false
+}
 
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	metrics, err := system.GetSystemMetrics()
@@ -301,7 +338,7 @@ func (s *Server) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ids := strings.Split(strings.TrimSpace(string(output)), "\n")
-	containers := make([]map[string]interface{}, 0)
+	containers := make([]interface{}, 0)
 	for _, id := range ids {
 		if id == "" {
 			continue
@@ -456,6 +493,14 @@ func (s *Server) handleCreateContainer(w http.ResponseWriter, r *http.Request) {
 	if !s.keyStore.HasScope(auth.ScopeContainersWrite) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:write scope required"})
 		return
+	}
+
+	// Validate volume mount paths — block dangerous host paths
+	for _, v := range config.Volumes {
+		if isVolumePathBlocked(v.Host) {
+			writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "BLOCKED_VOLUME", Message: fmt.Sprintf("volume path %q is not allowed for security reasons", v.Host)})
+			return
+		}
 	}
 
 	// No container limit — single key, user controls via Delete Control

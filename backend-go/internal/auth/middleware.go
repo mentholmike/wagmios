@@ -41,7 +41,7 @@ func NewAuthHandler(ks *KeyStore) *AuthHandler {
 func (h *AuthHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip auth for public paths
-		if isPublicPath(r.URL.Path) {
+		if IsPublicPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -72,35 +72,22 @@ func (h *AuthHandler) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// isPublicPath returns true for paths that don't need authentication
-func isPublicPath(path string) bool {
-	public := []string{
-		"/api/auth/setup",
-		"/api/auth/verify",
-		"/api/auth/status",
-		"/api/ws/activity",
-		"/api/system/info",
-		"/health",
-		"/",
-	}
-	for _, p := range public {
-		if path == p || path == p+"/*" {
+// IsPublicPath returns true for paths that don't need authentication.
+var PublicPaths = []string{
+	"/api/auth/setup",
+	"/api/auth/verify",
+	"/api/auth/status",
+	"/api/ws/activity", // WebSocket — read-only, no sensitive data
+	"/health",
+}
+
+func IsPublicPath(path string) bool {
+	for _, p := range PublicPaths {
+		if path == p {
 			return true
 		}
 	}
 	return false
-}
-
-// AuthRequired is a middleware that requires authentication
-func AuthRequired(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		meta := GetMetaFromContext(r.Context())
-		if meta == nil {
-			http.Error(w, `{"success":false,"error":{"code":"UNAUTHORIZED","message":"Authentication required"}}`, http.StatusUnauthorized)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 // RateLimiter implements a per-key rate limiter
@@ -161,7 +148,6 @@ type PendingApproval struct {
 	CreatedAt time.Time
 	Token     string
 	// Params stores action-specific data needed to execute on approval
-	// e.g. for "delete": {"container_id": "..."}
 	Params map[string]string
 }
 
@@ -189,12 +175,11 @@ func (as *ApprovalStore) RequestApproval(scope Scope, action, target, keyID stri
 	defer as.mu.Unlock()
 
 	token := generateToken()
-	// Encode all params into the ID so approval survives restarts (stateless)
 	id := encodeApprovalID(scope, action, target, keyID, params)
 
 	approval := &PendingApproval{
 		ID:        id,
-		Scope:     scope,
+		Scope:     Scope(scope),
 		Action:    action,
 		Target:    target,
 		KeyID:     keyID,
@@ -207,9 +192,8 @@ func (as *ApprovalStore) RequestApproval(scope Scope, action, target, keyID stri
 	return approval
 }
 
-// GetApproval decodes approval data from the ID (stateless - params are encoded in the ID)
+// GetApproval decodes approval data from the ID (stateless)
 func (as *ApprovalStore) GetApproval(id string) *PendingApproval {
-	// Decode params from ID (stateless)
 	params := decodeApprovalID(id)
 	if params == nil {
 		return nil
@@ -224,7 +208,7 @@ func (as *ApprovalStore) GetApproval(id string) *PendingApproval {
 	}
 }
 
-// Approve decodes the ID, marks it completed, and returns the approval data for execution
+// Approve decodes the ID, marks it completed, and returns the approval data
 func (as *ApprovalStore) Approve(id string) (*PendingApproval, bool) {
 	params := decodeApprovalID(id)
 	if params == nil {
@@ -243,18 +227,17 @@ func (as *ApprovalStore) Approve(id string) (*PendingApproval, bool) {
 	as.mu.Lock()
 	defer as.mu.Unlock()
 	if _, exists := as.completed[id]; exists {
-		return nil, false // already approved
+		return nil, false
 	}
 	as.completed[id] = &CompletedApproval{
 		ID:         id,
 		Approved:   true,
 		ApprovedAt: time.Now().UTC(),
 	}
-	delete(as.pending, id) // remove from pending so it stops showing up
+	delete(as.pending, id)
 	return approval, true
 }
 
-// encodeApprovalID creates a stateless approval ID containing all params
 func encodeApprovalID(scope Scope, action, target, keyID string, params map[string]string) string {
 	data := map[string]string{
 		"scope":   string(scope),
@@ -265,13 +248,11 @@ func encodeApprovalID(scope Scope, action, target, keyID string, params map[stri
 	for k, v := range params {
 		data[k] = v
 	}
-	// Include expiry (24 hours from now)
 	data["expires"] = time.Now().Add(24 * time.Hour).Format(time.RFC3339)
 	jsonBytes, _ := json.Marshal(data)
 	return base64.URLEncoding.EncodeToString(jsonBytes)
 }
 
-// decodeApprovalID extracts params from a stateless approval ID
 func decodeApprovalID(id string) map[string]string {
 	jsonBytes, err := base64.URLEncoding.DecodeString(id)
 	if err != nil {
@@ -281,10 +262,9 @@ func decodeApprovalID(id string) map[string]string {
 	if err := json.Unmarshal(jsonBytes, &data); err != nil {
 		return nil
 	}
-	// Check expiry
 	if exp := data["expires"]; exp != "" {
 		if t, err := time.Parse(time.RFC3339, exp); err == nil && time.Now().After(t) {
-			return nil // expired
+			return nil
 		}
 	}
 	return data

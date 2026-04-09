@@ -92,6 +92,17 @@
                 'border focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               ]" placeholder="e.g., openclaw-agent" />
             </div>
+            <div>
+              <label class="block text-sm font-medium mb-2" :class="isDarkMode ? 'text-gray-300' : 'text-gray-700'">Setup Token</label>
+              <input v-model="setupToken" type="text" :class="[
+                'w-full px-4 py-3 rounded-xl text-sm font-mono',
+                isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-gray-50 text-gray-900 border-gray-200',
+                'border focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              ]" placeholder="wag_setup_xxxx..." />
+              <p class="text-xs mt-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                Found in your server logs. One-time use token for first key creation.
+              </p>
+            </div>
           </div>
 
           <!-- Step 4: Generated -->
@@ -170,6 +181,7 @@ const error = ref('')
 const generatedKey = ref('')
 
 const keyLabel = ref('')
+const setupToken = ref('')
 
 const scopeGroups = ref([
   { group: 'containers:read', description: 'List and inspect containers, view logs and configs', enabled: true },
@@ -200,7 +212,7 @@ async function generateKey() {
   loading.value = true
   error.value = ''
   try {
-    const res = await client.setupKey(enabledScopes.value, keyLabel.value || 'default')
+    const res = await client.setupKey(enabledScopes.value, keyLabel.value || 'default', setupToken.value || undefined)
     if (res.success && res.data.key) {
       generatedKey.value = res.data.key
     } else {

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,13 +31,22 @@ const (
 	ScopeMarketplaceWrite Scope = "marketplace:write"
 	ScopeSecretsWrite     Scope = "secrets:write"
 	ScopeSystemRead       Scope = "system:read"
+	ScopeKeysWrite        Scope = "keys:write" // Can create/list/revoke other keys
 )
 
 // Dangerous scopes that require approval even if granted
 var DangerousScopes = map[Scope]bool{
 	ScopeContainersDelete: true,
-	ScopeSecretsWrite:    true,
+	ScopeSecretsWrite:     true,
 }
+
+// KeyRole determines whether a key is an admin key or an agent key
+type KeyRole string
+
+const (
+	RoleAdmin KeyRole = "admin"
+	RoleAgent KeyRole = "agent"
+)
 
 // KeyMeta stores metadata about an API key (not the key itself)
 type KeyMeta struct {
@@ -47,14 +57,16 @@ type KeyMeta struct {
 	CreatedAt  time.Time `json:"created_at"`
 	LastUsedAt time.Time `json:"last_used_at"`
 	Label      string    `json:"label"`
+	Role       KeyRole   `json:"role"` // admin or agent
 }
 
-// KeyStore manages API keys
+// KeyStore manages API keys — supports multiple keys
 type KeyStore struct {
-	mu          sync.RWMutex
-	dataDir     string
-	metaPath    string
-	currentMeta *KeyMeta
+	mu         sync.RWMutex
+	dataDir    string
+	keysDir    string
+	keys       map[string]*KeyMeta // id -> KeyMeta
+	setupToken string              // One-time token for first-boot setup
 }
 
 // NewKeyStore initializes or loads an existing key store
@@ -65,39 +77,120 @@ func NewKeyStore(dataDir string) (*KeyStore, error) {
 	}
 
 	ks := &KeyStore{
-		dataDir:  dataDir,
-		metaPath: filepath.Join(keysDir, "meta.json"),
+		dataDir: dataDir,
+		keysDir: keysDir,
+		keys:    make(map[string]*KeyMeta),
 	}
 
-	// Load existing key if present
-	if _, err := os.Stat(ks.metaPath); err == nil {
-		if err := ks.loadMeta(); err != nil {
-			return nil, fmt.Errorf("failed to load key meta: %w", err)
+	// Load existing keys — first try multi-key format, then migrate from single-key
+	if err := ks.loadKeys(); err != nil {
+		return nil, fmt.Errorf("failed to load keys: %w", err)
+	}
+
+	// Generate a setup token if no key exists yet (first-boot)
+	if len(ks.keys) == 0 {
+		if err := ks.generateSetupToken(); err != nil {
+			return nil, fmt.Errorf("failed to generate setup token: %w", err)
 		}
 	}
 
 	return ks, nil
 }
 
-// HasKey returns true if a key has been set up
+// loadKeys loads all keys from disk. Migrates from single-key format if needed.
+func (ks *KeyStore) loadKeys() error {
+	// Try multi-key directory format first
+	entries, err := os.ReadDir(ks.keysDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		// Skip non-key files
+		if entry.Name() == "meta.json" || entry.Name() == "setup-token" {
+			continue
+		}
+
+		filePath := filepath.Join(ks.keysDir, entry.Name())
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			log.Printf("Warning: failed to read key file %s: %v", filePath, err)
+			continue
+		}
+
+		var meta KeyMeta
+		if err := json.Unmarshal(data, &meta); err != nil {
+			log.Printf("Warning: failed to parse key file %s: %v", filePath, err)
+			continue
+		}
+
+		ks.keys[meta.ID] = &meta
+	}
+
+	// Migrate from single-key meta.json if it exists and no keys loaded yet
+	if len(ks.keys) == 0 {
+		metaPath := filepath.Join(ks.keysDir, "meta.json")
+		if data, err := os.ReadFile(metaPath); err == nil {
+			var meta KeyMeta
+			if err := json.Unmarshal(data, &meta); err == nil {
+				// Assign admin role to the first key (was the only key)
+				meta.Role = RoleAdmin
+				ks.keys[meta.ID] = &meta
+
+				// Save in new format
+				if err := ks.saveKeyToDisk(&meta); err != nil {
+					log.Printf("Warning: failed to migrate key to new format: %v", err)
+				} else {
+					// Remove old meta.json
+					os.Remove(metaPath)
+					log.Printf("Migrated single key %s to multi-key format", meta.ID)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// HasKey returns true if at least one key has been set up
 func (ks *KeyStore) HasKey() bool {
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
-	return ks.currentMeta != nil
+	return len(ks.keys) > 0
+}
+
+// HasAdminKey returns true if at least one admin key exists
+func (ks *KeyStore) HasAdminKey() bool {
+	ks.mu.RLock()
+	defer ks.mu.RUnlock()
+	for _, k := range ks.keys {
+		if k.Role == RoleAdmin {
+			return true
+		}
+	}
+	return false
 }
 
 // IsWizardRequired returns true if first-boot setup is needed
 func (ks *KeyStore) IsWizardRequired() bool {
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
-	return ks.currentMeta == nil
+	return len(ks.keys) == 0
 }
 
 // GenerateKey creates a new API key with the given configuration
-func (ks *KeyStore) GenerateKey(scopes []Scope, label string) (string, *KeyMeta, error) {
+func (ks *KeyStore) GenerateKey(scopes []Scope, label string, role KeyRole) (string, *KeyMeta, error) {
 	ks.mu.Lock()
 	defer ks.mu.Unlock()
 
+	return ks.generateKeyLocked(scopes, label, role)
+}
+
+// generateKeyLocked creates a key while already holding the lock
+func (ks *KeyStore) generateKeyLocked(scopes []Scope, label string, role KeyRole) (string, *KeyMeta, error) {
 	// Generate 32 random bytes -> base64url encoded
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
@@ -124,13 +217,14 @@ func (ks *KeyStore) GenerateKey(scopes []Scope, label string) (string, *KeyMeta,
 		CreatedAt:  time.Now().UTC(),
 		LastUsedAt: time.Now().UTC(),
 		Label:      label,
+		Role:       role,
 	}
 
-	if err := ks.saveMeta(meta); err != nil {
-		return "", nil, fmt.Errorf("failed to save meta: %w", err)
+	if err := ks.saveKeyToDisk(meta); err != nil {
+		return "", nil, fmt.Errorf("failed to save key: %w", err)
 	}
 
-	ks.currentMeta = meta
+	ks.keys[meta.ID] = meta
 	return keyStr, meta, nil
 }
 
@@ -139,7 +233,7 @@ func (ks *KeyStore) ValidateKey(key string) (*KeyMeta, error) {
 	ks.mu.Lock()
 	defer ks.mu.Unlock()
 
-	if ks.currentMeta == nil {
+	if len(ks.keys) == 0 {
 		return nil, fmt.Errorf("no key configured")
 	}
 
@@ -148,52 +242,139 @@ func (ks *KeyStore) ValidateKey(key string) (*KeyMeta, error) {
 		return nil, fmt.Errorf("invalid key format")
 	}
 
-	// Compare hash
+	// Hash the provided key and compare against all stored keys
 	hash := hashKey(key)
-	if hash != ks.currentMeta.KeyHash {
-		return nil, fmt.Errorf("invalid key")
+	for _, meta := range ks.keys {
+		if hash == meta.KeyHash {
+			// Update last used
+			meta.LastUsedAt = time.Now().UTC()
+			ks.saveKeyToDisk(meta)
+			return meta, nil
+		}
 	}
 
-	// Update last used
-	ks.currentMeta.LastUsedAt = time.Now().UTC()
-	ks.saveMeta(ks.currentMeta)
-
-	return ks.currentMeta, nil
+	return nil, fmt.Errorf("invalid key")
 }
 
-// GetMeta returns current key metadata (no sensitive data)
+// GetKeyByID returns a key by ID (for admin key listing)
+func (ks *KeyStore) GetKeyByID(id string) *KeyMeta {
+	ks.mu.RLock()
+	defer ks.mu.RUnlock()
+	if m, ok := ks.keys[id]; ok {
+		m := *m // copy
+		return &m
+	}
+	return nil
+}
+
+// ListKeys returns metadata for all keys (without hashes)
+func (ks *KeyStore) ListKeys() []KeyMeta {
+	ks.mu.RLock()
+	defer ks.mu.RUnlock()
+
+	result := make([]KeyMeta, 0, len(ks.keys))
+	for _, m := range ks.keys {
+		result = append(result, *m)
+	}
+	return result
+}
+
+// RevokeKey deletes a key by ID. Returns error if it's the last admin key.
+func (ks *KeyStore) RevokeKey(id string) error {
+	ks.mu.Lock()
+	defer ks.mu.Unlock()
+
+	meta, ok := ks.keys[id]
+	if !ok {
+		return fmt.Errorf("key not found")
+	}
+
+	// Count admin keys
+	adminCount := 0
+	for _, k := range ks.keys {
+		if k.Role == RoleAdmin {
+			adminCount++
+		}
+	}
+
+	// Don't allow deleting the last admin key
+	if meta.Role == RoleAdmin && adminCount <= 1 {
+		return fmt.Errorf("cannot revoke the last admin key — at least one admin must remain")
+	}
+
+	// Remove from memory
+	delete(ks.keys, id)
+
+	// Remove from disk
+	keyFile := filepath.Join(ks.keysDir, id+".json")
+	os.Remove(keyFile)
+
+	log.Printf("Revoked key %s (label=%s, role=%s)", id, meta.Label, meta.Role)
+	return nil
+}
+
+// GetMeta returns the first admin key metadata (backward compat)
 func (ks *KeyStore) GetMeta() *KeyMeta {
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
-	if ks.currentMeta == nil {
-		return nil
+	// Return admin key if available, otherwise first key
+	for _, m := range ks.keys {
+		if m.Role == RoleAdmin {
+			cp := *m
+			return &cp
+		}
 	}
-	m := *ks.currentMeta
-	return &m
+	// Fallback: return any key
+	for _, m := range ks.keys {
+		cp := *m
+		return &cp
+	}
+	return nil
 }
 
-// UpdateScopes updates the key's scopes
+// UpdateScopes updates the first admin key's scopes (backward compat)
 func (ks *KeyStore) UpdateScopes(scopes []Scope) error {
 	ks.mu.Lock()
 	defer ks.mu.Unlock()
-	if ks.currentMeta == nil {
-		return fmt.Errorf("no key to update")
+
+	// Find admin key
+	for _, m := range ks.keys {
+		if m.Role == RoleAdmin {
+			m.Scopes = scopes
+			m.LastUsedAt = time.Now().UTC()
+			return ks.saveKeyToDisk(m)
+		}
 	}
-	ks.currentMeta.Scopes = scopes
-	ks.currentMeta.LastUsedAt = time.Now().UTC()
-	return ks.saveMeta(ks.currentMeta)
+	return fmt.Errorf("no admin key to update")
+}
+
+// UpdateKeyScopes updates a specific key's scopes
+func (ks *KeyStore) UpdateKeyScopes(id string, scopes []Scope) error {
+	ks.mu.Lock()
+	defer ks.mu.Unlock()
+
+	meta, ok := ks.keys[id]
+	if !ok {
+		return fmt.Errorf("key not found")
+	}
+
+	meta.Scopes = scopes
+	meta.LastUsedAt = time.Now().UTC()
+	return ks.saveKeyToDisk(meta)
 }
 
 // HasScope checks if the current key has a specific scope
 func (ks *KeyStore) HasScope(scope Scope) bool {
 	ks.mu.RLock()
 	defer ks.mu.RUnlock()
-	if ks.currentMeta == nil {
-		return false
-	}
-	for _, s := range ks.currentMeta.Scopes {
-		if s == scope || s == Scope("*") {
-			return true
+	// Check admin key first, then any key
+	for _, m := range ks.keys {
+		if m.Role == RoleAdmin {
+			for _, s := range m.Scopes {
+				if s == scope || s == Scope("*") {
+					return true
+				}
+			}
 		}
 	}
 	return false
@@ -217,28 +398,82 @@ func KeyStoreHasScope(meta *KeyMeta, scope Scope) bool {
 	return false
 }
 
-// ---- Private helpers ----
+// ---- Setup token management ----
 
-func (ks *KeyStore) saveMeta(meta *KeyMeta) error {
+// generateSetupToken creates a one-time setup token and persists it to disk.
+func (ks *KeyStore) generateSetupToken() error {
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return fmt.Errorf("failed to generate setup token: %w", err)
+	}
+	token := "wag_setup_" + base64URLEncode(raw)
+	ks.setupToken = token
+
+	// Persist the token so it survives restarts
+	tokenPath := filepath.Join(ks.keysDir, "setup-token")
+	if err := os.WriteFile(tokenPath, []byte(token), 0600); err != nil {
+		return fmt.Errorf("failed to persist setup token: %w", err)
+	}
+	log.Printf("Setup token generated. Use this token to create the first API key.")
+	return nil
+}
+
+// loadSetupToken loads an existing setup token from disk.
+func (ks *KeyStore) loadSetupToken() error {
+	tokenPath := filepath.Join(ks.keysDir, "setup-token")
+	data, err := os.ReadFile(tokenPath)
+	if err != nil {
+		return err
+	}
+	ks.setupToken = strings.TrimSpace(string(data))
+	return nil
+}
+
+// ValidateAndConsumeSetupToken checks if the provided token matches the stored
+// setup token, and if so, consumes it.
+func (ks *KeyStore) ValidateAndConsumeSetupToken(token string) error {
+	// If key already exists, no setup token needed
+	if ks.HasKey() {
+		return nil
+	}
+
+	// Try loading token if not in memory
+	if ks.setupToken == "" {
+		if err := ks.loadSetupToken(); err != nil {
+			return fmt.Errorf("no setup token found — restart with WAGMIOS_RESET_KEY=1 to generate one")
+		}
+	}
+
+	if token != ks.setupToken {
+		return fmt.Errorf("invalid setup token")
+	}
+
+	// Consume the token — delete the file so it can't be reused
+	tokenPath := filepath.Join(ks.keysDir, "setup-token")
+	os.Remove(tokenPath)
+	ks.setupToken = ""
+
+	return nil
+}
+
+// GetSetupToken returns the current setup token (for display in logs/status).
+func (ks *KeyStore) GetSetupToken() string {
+	return ks.setupToken
+}
+
+// ---- Disk persistence ----
+
+// saveKeyToDisk persists a single key to its own file
+func (ks *KeyStore) saveKeyToDisk(meta *KeyMeta) error {
+	filePath := filepath.Join(ks.keysDir, meta.ID+".json")
 	data, err := json.MarshalIndent(meta, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(ks.metaPath, data, 0600)
+	return os.WriteFile(filePath, data, 0600)
 }
 
-func (ks *KeyStore) loadMeta() error {
-	data, err := os.ReadFile(ks.metaPath)
-	if err != nil {
-		return err
-	}
-	var meta KeyMeta
-	if err := json.Unmarshal(data, &meta); err != nil {
-		return err
-	}
-	ks.currentMeta = &meta
-	return nil
-}
+// ---- Private helpers ----
 
 func hashKey(key string) string {
 	h := sha256.Sum256([]byte(key))

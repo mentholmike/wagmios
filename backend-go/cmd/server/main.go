@@ -35,6 +35,15 @@ func main() {
 	log.Printf("WAGMIOS starting on %s", addr)
 	log.Printf("Wizard required: %v", ks.IsWizardRequired())
 
+	// If first-boot setup is needed, log the setup token for the operator
+	if ks.IsWizardRequired() && ks.GetSetupToken() != "" {
+		log.Printf("============================================")
+		log.Printf("SETUP TOKEN (use this for first API key):")
+		log.Printf("  %s", ks.GetSetupToken())
+		log.Printf("This token is one-time use and will be consumed after setup.")
+		log.Printf("============================================")
+	}
+
 	if err := http.ListenAndServe(addr, server.Router()); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
