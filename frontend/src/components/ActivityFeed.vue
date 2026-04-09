@@ -61,7 +61,11 @@ const events = ref<ActivityEvent[]>([])
 let ws: WebSocket | null = null
 
 function connect() {
-  ws = new WebSocket(ACTIVITY_WS_URL)
+  // Pass API key as query parameter for WebSocket auth
+  // (browsers can't set custom headers on WebSocket upgrades)
+  const apiKey = client.getApiKey()
+  const wsUrl = apiKey ? `${ACTIVITY_WS_URL}?key=${encodeURIComponent(apiKey)}` : ACTIVITY_WS_URL
+  ws = new WebSocket(wsUrl)
 
   ws.onmessage = (msg) => {
     try {

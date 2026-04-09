@@ -77,8 +77,23 @@ var PublicPaths = []string{
 	"/api/auth/setup",
 	"/api/auth/verify",
 	"/api/auth/status",
-	"/api/ws/activity", // WebSocket — read-only, no sensitive data
 	"/health",
+}
+
+// IsWebSocketPath returns true for paths that support WebSocket upgrades.
+// These require auth but can't use headers — they use query parameter ?key=
+var WebSocketPaths = []string{
+	"/api/ws/activity",
+}
+
+// IsWebSocketPath checks if a path is a WebSocket endpoint.
+func IsWebSocketPath(path string) bool {
+	for _, p := range WebSocketPaths {
+		if path == p {
+			return true
+		}
+	}
+	return false
 }
 
 func IsPublicPath(path string) bool {

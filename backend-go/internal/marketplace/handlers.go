@@ -230,14 +230,24 @@ func HandleStartApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate compose file exists
-	if _, err := os.Stat(req.ComposePath); os.IsNotExist(err) {
+	// Validate compose file exists and is within the allowed containers directory
+	absPath, err := filepath.Abs(req.ComposePath)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_PATH", "invalid compose path")
+		return
+	}
+	absContainersDir, _ := filepath.Abs(containersDir)
+	if !strings.HasPrefix(absPath, absContainersDir+"/") {
+		writeError(w, http.StatusForbidden, "PATH_FORBIDDEN", "compose path must be within the containers directory")
+		return
+	}
+	if _, err := os.Stat(absPath); os.IsNotExist(err) {
 		writeError(w, http.StatusNotFound, "COMPOSE_NOT_FOUND", "compose file not found at specified path")
 		return
 	}
 
-	// Run docker compose up -d with user-specified container name
-	cmd := exec.Command("docker", "compose", "-f", req.ComposePath, "-p", req.ContainerName, "up", "-d")
+	// Run docker compose up -d with validated container name
+	cmd := exec.Command("docker", "compose", "-f", absPath, "-p", req.ContainerName, "up", "-d")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "COMPOSE_UP_FAILED", fmt.Sprintf("%s: %s", err.Error(), string(output)))
@@ -248,7 +258,7 @@ func HandleStartApp(w http.ResponseWriter, r *http.Request) {
 	outputStr := string(output)
 	if strings.Contains(outputStr, "Pulling") || strings.Contains(outputStr, "pull") {
 		// Try to extract image name from compose file
-		if data, err := os.ReadFile(req.ComposePath); err == nil {
+		if data, err := os.ReadFile(absPath); err == nil {
 			if idx := strings.Index(string(data), "image:"); idx >= 0 {
 				line := strings.TrimSpace(string(data)[idx+6:])
 				if nl := strings.Index(line, "\n"); nl > 0 {

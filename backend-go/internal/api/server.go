@@ -59,7 +59,8 @@ func NewServer(ks *auth.KeyStore) *Server {
 }
 
 func (s *Server) Router() http.Handler {
-	// CORS
+	// CORS — allows all origins for homelab use.
+	// For production: restrict AllowedOrigins to your actual domains.
 	return cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -84,12 +85,18 @@ func (s *Server) registerRoutes() {
 
 			// Skip auth for public paths
 			if !isPublicPath(r.URL.Path) && s.keyStore.HasKey() {
-				// Authenticate
-				if apiKey == "" {
+				// For WebSocket endpoints, also accept ?key= query parameter
+				// (browsers can't set custom headers on WebSocket upgrades)
+				effectiveKey := apiKey
+				if effectiveKey == "" && auth.IsWebSocketPath(r.URL.Path) {
+					effectiveKey = r.URL.Query().Get("key")
+				}
+
+				if effectiveKey == "" {
 					writeJSON(w, http.StatusUnauthorized, nil, &APIError{Code: "API_KEY_REQUIRED", Message: "X-API-Key header required"})
 					return
 				}
-				meta, err := s.keyStore.ValidateKey(apiKey)
+				meta, err := s.keyStore.ValidateKey(effectiveKey)
 				if err != nil {
 					writeJSON(w, http.StatusUnauthorized, nil, &APIError{Code: "INVALID_KEY", Message: "Invalid or expired API key"})
 					return
