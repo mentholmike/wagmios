@@ -40,15 +40,15 @@ type Manifest struct {
 
 // AppTemplate is the full compose template for an app
 type AppTemplate struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Category    string                 `json:"category"`
-	Description string                 `json:"description"`
-	Image       string                 `json:"image"`
-	Ports       []int                  `json:"ports"`
-	Environment []EnvVar               `json:"environment"`
-	Volumes     []Volume               `json:"volumes"`
-	RawMarkdown string                 `json:"-"` // original markdown
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Category    string   `json:"category"`
+	Description string   `json:"description"`
+	Image       string   `json:"image"`
+	Ports       []int    `json:"ports"`
+	Environment []EnvVar `json:"environment"`
+	Volumes     []Volume `json:"volumes"`
+	RawMarkdown string   `json:"-"` // original markdown
 }
 
 // EnvVar describes an environment variable
@@ -199,14 +199,14 @@ func GetAppByID(manifest *Manifest, appID string) *AppManifest {
 
 // frontmatterYAML maps directly to our AppTemplate fields
 type frontmatterYAML struct {
-	ID          string            `yaml:"id"`
-	Name        string            `yaml:"name"`
-	Category    string            `yaml:"category"`
-	Description string            `yaml:"description"`
-	Image       string            `yaml:"image"`
-	Ports       []int             `yaml:"ports"`
-	Environment []envVarYAML      `yaml:"environment"`
-	Volumes     []volumeYAML      `yaml:"volumes"`
+	ID          string       `yaml:"id"`
+	Name        string       `yaml:"name"`
+	Category    string       `yaml:"category"`
+	Description string       `yaml:"description"`
+	Image       string       `yaml:"image"`
+	Ports       []int        `yaml:"ports"`
+	Environment []envVarYAML `yaml:"environment"`
+	Volumes     []volumeYAML `yaml:"volumes"`
 }
 
 type envVarYAML struct {
@@ -279,7 +279,7 @@ func ParseAppMarkdown(markdown string) (*AppTemplate, error) {
 	if composeStart >= 0 {
 		composeEnd := strings.Index(content[composeStart+7:], "```")
 		if composeEnd >= 0 {
-			tmpl.RawMarkdown = strings.TrimSpace(content[composeStart+7:composeStart+7+composeEnd])
+			tmpl.RawMarkdown = strings.TrimSpace(content[composeStart+7 : composeStart+7+composeEnd])
 		}
 	}
 

@@ -1,14 +1,20 @@
 // Dynamic API URL configuration
 export const getApiBaseUrl = () => {
+  const configured = import.meta.env.VITE_API_URL;
+  if (configured) {
+    return configured.endsWith('/api') ? configured : `${configured.replace(/\/$/, '')}/api`;
+  }
   const hostname = window.location.hostname;
-  const port = '5179';
+  const port = import.meta.env.VITE_BACKEND_PORT || '5179';
   const protocol = window.location.protocol;
   return `${protocol}//${hostname}:${port}/api`;
 };
 
 export const getWsBaseUrl = () => {
+  const configured = import.meta.env.VITE_WS_URL;
+  if (configured) return configured.replace(/\/$/, '');
   const hostname = window.location.hostname;
-  const port = '5179';
+  const port = import.meta.env.VITE_BACKEND_PORT || '5179';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${hostname}:${port}`;
 };
@@ -49,10 +55,11 @@ export const ACTIVITY_WS_URL = `${WS_BASE_URL}/api/ws/activity`;
 
 // Marketplace
 export const MARKETPLACE_URL = `${API_BASE_URL}/marketplace`;
-export const MARKETPLACE_INSTALL_URL = `${API_BASE_URL}/marketplace/install`;
+export const MARKETPLACE_CREATE_URL = `${API_BASE_URL}/marketplace/create`;
+export const MARKETPLACE_START_URL = `${API_BASE_URL}/marketplace/start`;
 
 // Templates
-export const TEMPLATES_URL = `${API_BASE_URL}/templates`;
+export const TEMPLATES_URL = `${API_BASE_URL}/containers/templates`;
 
 // ---- API Client ----
 
@@ -168,6 +175,14 @@ class WagmiosClient {
     return this.request<AuthStatus>(AUTH_STATUS_URL);
   }
 
+  async verifyKey(key: string): Promise<ApiResponse<{ valid: boolean; key_id: string; key_label: string; role: string; scopes: string[] }>> {
+    return this.request<{ valid: boolean; key_id: string; key_label: string; role: string; scopes: string[] }>(AUTH_VERIFY_URL, {
+      method: 'POST',
+      body: JSON.stringify({ key }),
+      headers: { 'X-API-Key': '' },
+    });
+  }
+
   async setupKey(scopes: string[], label: string, setupToken?: string): Promise<ApiResponse<{ key: string; meta: KeyMeta }>> {
     const res = await this.request<{ key: string; meta: KeyMeta }>(AUTH_SETUP_URL, {
       method: 'POST',
@@ -179,8 +194,8 @@ class WagmiosClient {
     return res;
   }
 
-  async getSettings(): Promise<ApiResponse<AuthStatus>> {
-    return this.request<AuthStatus>(AUTH_STATUS_URL);
+  async getSettings(): Promise<ApiResponse<KeyMeta>> {
+    return this.request<KeyMeta>(SETTINGS_URL);
   }
 
   // Keys
@@ -266,10 +281,17 @@ class WagmiosClient {
     return this.request(MARKETPLACE_URL);
   }
 
-  async installMarketplaceApp(image: string, name: string): Promise<ApiResponse<any>> {
-    return this.request(MARKETPLACE_INSTALL_URL, {
+  async createMarketplaceApp(payload: { app_id: string; custom_name?: string; environment?: Record<string, string>; volumes?: Record<string, string>; ports?: Record<string, number> }): Promise<ApiResponse<any>> {
+    return this.request(MARKETPLACE_CREATE_URL, {
       method: 'POST',
-      body: JSON.stringify({ image, name }),
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async startMarketplaceApp(containerName: string, composePath: string): Promise<ApiResponse<any>> {
+    return this.request(MARKETPLACE_START_URL, {
+      method: 'POST',
+      body: JSON.stringify({ container_name: containerName, compose_path: composePath }),
     });
   }
 }

@@ -1,6 +1,7 @@
 package activity
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"wagmios/internal/auth"
 )
 
 var upgrader = websocket.Upgrader{
@@ -74,10 +76,10 @@ func init() {
 
 type MetricsSummary struct {
 	RequestsLast24h int             `json:"requests_last_24h"`
-	RequestsByHour  []int          `json:"requests_by_hour"`
+	RequestsByHour  []int           `json:"requests_by_hour"`
 	ContainerCounts ContainerCounts `json:"container_counts"`
-	UptimeSeconds   int64          `json:"uptime_seconds"`
-	PullsLast24h    int            `json:"pulls_last_24h"`
+	UptimeSeconds   int64           `json:"uptime_seconds"`
+	PullsLast24h    int             `json:"pulls_last_24h"`
 }
 
 type ContainerCounts struct {
@@ -189,14 +191,14 @@ func IncrementPulls() {
 func GetSummary(dockerTotal, dockerRunning int) MetricsSummary {
 	return MetricsSummary{
 		RequestsLast24h: reqCounters.GetTotal(),
-		RequestsByHour:   reqCounters.GetHourlyBuckets(),
+		RequestsByHour:  reqCounters.GetHourlyBuckets(),
 		ContainerCounts: ContainerCounts{
 			Total:   dockerTotal,
 			Running: dockerRunning,
 			Stopped: dockerTotal - dockerRunning,
 		},
 		UptimeSeconds: int64(time.Since(startTime).Seconds()),
-		PullsLast24h: reqCounters.GetPulls(),
+		PullsLast24h:  reqCounters.GetPulls(),
 	}
 }
 
@@ -327,11 +329,11 @@ func LogImagePull(imageName string, success bool, details string) {
 		status = "error"
 	}
 	Log(Event{
-		Type:   "image_pull",
-		Action: "pull",
-		Target: imageName,
-		Status: status,
-		Agent:  "system",
+		Type:    "image_pull",
+		Action:  "pull",
+		Target:  imageName,
+		Status:  status,
+		Agent:   "system",
 		Details: details,
 	})
 }
@@ -387,7 +389,27 @@ func statusText(code int) string {
 	}
 }
 
+func requireSystemRead(w http.ResponseWriter, r *http.Request) bool {
+	if !auth.KeyStoreHasScope(auth.GetMetaFromContext(r.Context()), auth.ScopeSystemRead) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"data":    nil,
+			"error": map[string]string{
+				"code":    "SCOPE_REQUIRED",
+				"message": "system:read scope required",
+			},
+		})
+		return false
+	}
+	return true
+}
+
 func ActivityFeedHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireSystemRead(w, r) {
+		return
+	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade error: %v", err)
@@ -412,6 +434,9 @@ func ActivityAPIHandlers(r *mux.Router) {
 }
 
 func handleGetActivity(w http.ResponseWriter, r *http.Request) {
+	if !requireSystemRead(w, r) {
+		return
+	}
 	limit := 100
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -424,6 +449,9 @@ func handleGetActivity(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetMetricsSummary(w http.ResponseWriter, r *http.Request) {
+	if !requireSystemRead(w, r) {
+		return
+	}
 	total, running := getContainerCounts()
 	summary := GetSummary(total, running)
 	w.Header().Set("Content-Type", "application/json")
@@ -434,7 +462,9 @@ func handleGetMetricsSummary(w http.ResponseWriter, r *http.Request) {
 }
 
 func getContainerCounts() (total int, running int) {
-	cmd := exec.Command("docker", "ps", "-a", "--format", "{{.ID}}|{{.Status}}")
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "docker", "ps", "-a", "--format", "{{.ID}}|{{.Status}}")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return 0, 0

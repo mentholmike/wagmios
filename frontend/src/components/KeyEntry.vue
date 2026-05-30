@@ -69,16 +69,13 @@ async function verify() {
   verifying.value = true
   error.value = ''
 
-  // Store the key first, then verify it works
-  client.setApiKey(apiKey.value.trim())
-
   try {
-    const res = await client.getAuthStatus()
-    if (res.success && res.data?.has_key) {
-      // Key works — we're in
+    const key = apiKey.value.trim()
+    const res = await client.verifyKey(key)
+    if (res.success && res.data?.valid) {
+      client.setApiKey(key)
       emit('success')
     } else {
-      // Key didn't work, clear it
       client.clearApiKey()
       error.value = 'Invalid API key. Please check and try again.'
     }

@@ -1,6 +1,9 @@
 services:
   frontend:
-    image: itzmizzle/wagmi:frontend-latest
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: itzmizzle/wagmi:frontend
     container_name: wagmios-frontend
     ports:
       - "5174:5174"
@@ -18,7 +21,10 @@ services:
       - frontend_data:/app/data
 
   backend:
-    image: itzmizzle/wagmi:backend-latest
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: itzmizzle/wagmi:backend
     container_name: wagmios-backend
     ports:
       - "5179:5179"

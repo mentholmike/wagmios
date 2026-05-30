@@ -268,8 +268,8 @@ const enabledCount = computed(() => selectedScopes.value.size)
 async function loadKeyInfo() {
   const res = await client.getSettings()
   if (res.success) {
-    keyInfo.value = (res.data as AuthStatus)?.meta ?? null
-    selectedScopes.value = new Set((res.data as AuthStatus)?.meta?.scopes || [])
+    keyInfo.value = res.data as KeyMeta
+    selectedScopes.value = new Set((res.data as KeyMeta)?.scopes || [])
   }
   loading.value = false
 }

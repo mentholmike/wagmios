@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed.svg?logo=docker)](https://www.docker.com/)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg?logo=go)](https://golang.org/)
 
-**WAGMIOS** is a self-hosted Docker management platform built native for **OpenClaw agents**. Give your agent a scoped API key and it can manage your homelab  --  install apps, start/stop containers, pull images  --  with every action visible and auditable. Scope = permission. No sudo, no daemon access, just the exact access you grant.
+**WAGMIOS** is a self-hosted Docker management platform built native for **OpenClaw agents**. Give your agent a scoped API key and it can manage your homelab  --  install apps, start/stop containers, pull images  --  with every action visible and auditable. Scope = permission. Agents never receive sudo or direct Docker daemon access; WAGMIOS acts as the scoped control plane while the backend holds Docker socket access.
 
 > **Think of it as your homelab's command center.** Built for folks who want the power of Docker without memorizing every CLI flag.
 
@@ -289,8 +289,9 @@ Transmission, qBittorrent, Nextcloud, Filebrowser, Minecraft, n8n, RSSHub, and m
 
 ### Auth
 
-- Status  --  `GET /api/auth/status`  --  Check key scopes
-- Settings  --  `GET /api/settings`  --  Key metadata
+- Status  --  `GET /api/auth/status`  --  Public setup status only
+- Verify  --  `POST /api/auth/verify`  --  Validate an API key
+- Settings  --  `GET /api/settings`  --  Authenticated current-key metadata
 
 ---
 

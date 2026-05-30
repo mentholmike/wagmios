@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 	"wagmios/internal/api"
 	"wagmios/internal/auth"
 )
@@ -44,7 +45,16 @@ func main() {
 		log.Printf("============================================")
 	}
 
-	if err := http.ListenAndServe(addr, server.Router()); err != nil {
+	httpServer := &http.Server{
+		Addr:              addr,
+		Handler:           server.Router(),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      2 * time.Minute,
+		IdleTimeout:       2 * time.Minute,
+	}
+
+	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }

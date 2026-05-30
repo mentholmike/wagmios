@@ -8,13 +8,13 @@ import (
 )
 
 type Settings struct {
-	mu                      sync.RWMutex
-	ApprovalBypassEnabled   bool `json:"approval_bypass_enabled"`
+	mu                        sync.RWMutex
+	ApprovalBypassEnabled     bool `json:"approval_bypass_enabled"`
 	RequireApprovalsForDelete bool `json:"require_approvals_for_delete"`
 }
 
 var globalSettings = &Settings{
-	ApprovalBypassEnabled:    false,
+	ApprovalBypassEnabled:     false,
 	RequireApprovalsForDelete: true,
 }
 
@@ -46,7 +46,7 @@ func GetSettings() *Settings {
 	globalSettings.mu.RLock()
 	defer globalSettings.mu.RUnlock()
 	return &Settings{
-		ApprovalBypassEnabled:    globalSettings.ApprovalBypassEnabled,
+		ApprovalBypassEnabled:     globalSettings.ApprovalBypassEnabled,
 		RequireApprovalsForDelete: globalSettings.RequireApprovalsForDelete,
 	}
 }

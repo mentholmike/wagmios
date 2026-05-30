@@ -1,14 +1,15 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY frontend/package*.json ./
-RUN npm install --legacy-peer-deps
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY frontend/ ./
-RUN npm run build
+RUN pnpm build
 
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 

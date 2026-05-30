@@ -3,48 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
+
     <!-- Primary Meta Tags -->
     <title>WAGMI</title>
     <meta name="title" content="WAGMIOS">
     <meta name="description" content="Your Awesome System Dashboard - Manage your containers with ease">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/wagmi-logo.png">
     <link rel="apple-touch-icon" href="/wagmi-logo.png">
-    
+
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
-                   connect-src 'self' http://localhost:5179 http://*:5179 http://*:5174; 
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+                   connect-src 'self' http://localhost:5179 http://localhost:5189 http://*:5179 http://*:5189 http://*:5174 http://*:5184 ws://localhost:5179 ws://localhost:5189 ws://*:5179 ws://*:5189 wss://*:5179 wss://*:5189;
                    img-src 'self' http://* https://* data:;
-                   script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                   script-src 'self';
                    style-src 'self' 'unsafe-inline';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="strict-origin">
-    
+
     <!-- PWA Support -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://wagmios.dev/">
     <meta property="og:title" content="WAGMIOS">
     <meta property="og:description" content="Your Awesome System Dashboard - Manage your containers with ease">
     <meta property="og:image" content="/og-image.png">
-    
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://wagmios.dev/">
     <meta property="twitter:title" content="WAGMIOS">
     <meta property="twitter:description" content="Your Awesome System Dashboard - Manage your containers with ease">
     <meta property="twitter:image" content="/og-image.png">
-    
+
     <!-- Preconnect to External Domains -->
     <link rel="preconnect" href="https://hub.docker.com">
-    
+
     <!-- Critical CSS -->
     <style>
       html {
@@ -74,5 +74,5 @@
     </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
-</html> 
+</html>
 

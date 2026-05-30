@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -51,8 +52,8 @@ const (
 // KeyMeta stores metadata about an API key (not the key itself)
 type KeyMeta struct {
 	ID         string    `json:"id"`
-	KeyPrefix  string    `json:"key_prefix"`  // Last 8 chars for display
-	KeyHash    string    `json:"key_hash"`    // SHA256 of full key (for validation)
+	KeyPrefix  string    `json:"key_prefix"` // Last 8 chars for display
+	KeyHash    string    `json:"key_hash"`   // SHA256 of full key (for validation)
 	Scopes     []Scope   `json:"scopes"`
 	CreatedAt  time.Time `json:"created_at"`
 	LastUsedAt time.Time `json:"last_used_at"`
@@ -245,7 +246,7 @@ func (ks *KeyStore) ValidateKey(key string) (*KeyMeta, error) {
 	// Hash the provided key and compare against all stored keys
 	hash := hashKey(key)
 	for _, meta := range ks.keys {
-		if hash == meta.KeyHash {
+		if subtle.ConstantTimeCompare([]byte(hash), []byte(meta.KeyHash)) == 1 {
 			// Update last used
 			meta.LastUsedAt = time.Now().UTC()
 			ks.saveKeyToDisk(meta)

@@ -59,6 +59,8 @@ const props = defineProps<{ isDarkMode: boolean }>()
 const events = ref<ActivityEvent[]>([])
 
 let ws: WebSocket | null = null
+let stopped = false
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 function connect() {
   // Pass API key as query parameter for WebSocket auth
@@ -84,8 +86,9 @@ function connect() {
   }
 
   ws.onclose = () => {
-    // Reconnect after 3s
-    setTimeout(connect, 3000)
+    if (!stopped) {
+      reconnectTimer = setTimeout(connect, 3000)
+    }
   }
 }
 
@@ -102,6 +105,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  stopped = true
+  if (reconnectTimer) clearTimeout(reconnectTimer)
   ws?.close()
 })
 

@@ -255,10 +255,10 @@ func (as *ApprovalStore) Approve(id string) (*PendingApproval, bool) {
 
 func encodeApprovalID(scope Scope, action, target, keyID string, params map[string]string) string {
 	data := map[string]string{
-		"scope":   string(scope),
-		"action":  action,
-		"target":  target,
-		"key_id":  keyID,
+		"scope":  string(scope),
+		"action": action,
+		"target": target,
+		"key_id": keyID,
 	}
 	for k, v := range params {
 		data[k] = v

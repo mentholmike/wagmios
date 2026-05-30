@@ -23,8 +23,8 @@ type SetupRequest struct {
 
 // SetupResponse is returned after key generation
 type SetupResponse struct {
-	Key     string   `json:"key"`
-	KeyMeta *KeyMeta `json:"meta"`
+	Key     string        `json:"key"`
+	KeyMeta PublicKeyMeta `json:"meta"`
 }
 
 // CreateKeyRequest is the payload for creating a new key (admin only)
@@ -36,8 +36,34 @@ type CreateKeyRequest struct {
 
 // CreateKeyResponse is returned after creating a new key
 type CreateKeyResponse struct {
-	Key     string   `json:"key"`      // Full key — shown only once
-	KeyMeta *KeyMeta `json:"meta"`
+	Key     string        `json:"key"` // Full key — shown only once
+	KeyMeta PublicKeyMeta `json:"meta"`
+}
+
+// PublicKeyMeta is safe metadata for API responses. It never includes KeyHash.
+type PublicKeyMeta struct {
+	ID         string  `json:"id"`
+	KeyPrefix  string  `json:"key_prefix"`
+	Scopes     []Scope `json:"scopes"`
+	CreatedAt  string  `json:"created_at"`
+	LastUsedAt string  `json:"last_used_at"`
+	Label      string  `json:"label"`
+	Role       KeyRole `json:"role"`
+}
+
+func publicMeta(m *KeyMeta) PublicKeyMeta {
+	if m == nil {
+		return PublicKeyMeta{}
+	}
+	return PublicKeyMeta{
+		ID:         m.ID,
+		KeyPrefix:  m.KeyPrefix + "...",
+		Scopes:     m.Scopes,
+		CreatedAt:  m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		LastUsedAt: m.LastUsedAt.Format("2006-01-02T15:04:05Z07:00"),
+		Label:      m.Label,
+		Role:       m.Role,
+	}
 }
 
 // RegisterAuthHandlers registers auth-related routes
@@ -47,12 +73,13 @@ func RegisterAuthHandlers(r *mux.Router, ks *KeyStore) {
 	r.HandleFunc("/api/auth/verify", handleVerify(ks)).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/auth/status", handleStatus(ks)).Methods("GET", "OPTIONS")
 
-	// Key management endpoints — admin only (role check in handlers, not scope check)
-	r.HandleFunc("/api/keys", requireAuth(ks, handleListKeys(ks))).Methods("GET", "OPTIONS")
-	r.HandleFunc("/api/keys", requireAuth(ks, handleCreateKey(ks))).Methods("POST", "OPTIONS")
-	r.HandleFunc("/api/keys/{id}", requireAuth(ks, handleRevokeKey(ks))).Methods("DELETE", "OPTIONS")
+	// Key management endpoints — admin + keys:write required.
+	r.HandleFunc("/api/keys", requireAuthAndScope(ks, ScopeKeysWrite, handleListKeys(ks))).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/keys", requireAuthAndScope(ks, ScopeKeysWrite, handleCreateKey(ks))).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/keys/{id}", requireAuthAndScope(ks, ScopeKeysWrite, handleRevokeKey(ks))).Methods("DELETE", "OPTIONS")
 
 	// Settings endpoints — require auth + self-scope-escalation check
+	r.HandleFunc("/api/settings", requireAuth(ks, handleGetSettings(ks))).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/settings/scopes", requireAuth(ks, handleUpdateScopes(ks))).Methods("POST", "OPTIONS")
 }
 
@@ -105,7 +132,7 @@ func handleSetup(ks *KeyStore) http.HandlerFunc {
 			"success": true,
 			"data": SetupResponse{
 				Key:     key,
-				KeyMeta: meta,
+				KeyMeta: publicMeta(meta),
 			},
 			"error": nil,
 		})
@@ -141,7 +168,7 @@ func handleVerify(ks *KeyStore) http.HandlerFunc {
 				"valid":     true,
 				"key_id":    meta.ID,
 				"key_label": meta.Label,
-				"role":       meta.Role,
+				"role":      meta.Role,
 				"scopes":    meta.Scopes,
 			},
 			"error": nil,
@@ -164,19 +191,6 @@ func handleStatus(ks *KeyStore) http.HandlerFunc {
 
 		if len(keys) == 0 {
 			status["setup_token_available"] = ks.GetSetupToken() != ""
-		}
-
-		// For backward compat, show the first admin key in meta
-		if adminKey := ks.GetMeta(); adminKey != nil {
-			status["meta"] = map[string]interface{}{
-				"id":           adminKey.ID,
-				"key_prefix":   adminKey.KeyPrefix + "...",
-				"label":        adminKey.Label,
-				"role":         adminKey.Role,
-				"created_at":   adminKey.CreatedAt,
-				"last_used_at": adminKey.LastUsedAt,
-				"scopes":       adminKey.Scopes,
-			}
 		}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -252,13 +266,9 @@ func handleCreateKey(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// Scope escalation check: new key's scopes must be a subset of the caller's scopes
-		callerScopes := make(map[Scope]bool)
-		for _, s := range caller.Scopes {
-			callerScopes[s] = true
-		}
+		// Scope escalation check: new key's scopes must be grantable by the caller.
 		for _, s := range req.Scopes {
-			if !callerScopes[s] && s != Scope("*") {
+			if !canGrantScope(caller, s) {
 				writeError(w, http.StatusForbidden, "SCOPE_ESCALATION", "Cannot grant scope "+string(s)+" — caller does not have this scope")
 				return
 			}
@@ -280,7 +290,7 @@ func handleCreateKey(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, 
 			"success": true,
 			"data": CreateKeyResponse{
 				Key:     key,
-				KeyMeta: meta,
+				KeyMeta: publicMeta(meta),
 			},
 			"error": nil,
 		})
@@ -320,28 +330,13 @@ func handleRevokeKey(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, 
 }
 
 // handleGetSettings returns current settings (auth required)
-func handleGetSettings(ks *KeyStore) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func handleGetSettings(ks *KeyStore) func(w http.ResponseWriter, r *http.Request, meta *KeyMeta) {
+	return func(w http.ResponseWriter, r *http.Request, meta *KeyMeta) {
 		w.Header().Set("Content-Type", "application/json")
-		meta := ks.GetMeta()
-
-		if meta == nil {
-			writeError(w, http.StatusNotFound, "NOT_SETUP", "No API key configured")
-			return
-		}
-
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
-			"data": map[string]interface{}{
-				"id":           meta.ID,
-				"key_prefix":   meta.KeyPrefix + "...",
-				"label":        meta.Label,
-				"role":         meta.Role,
-				"created_at":   meta.CreatedAt,
-				"last_used_at": meta.LastUsedAt,
-				"scopes":       meta.Scopes,
-			},
-			"error": nil,
+			"data":    publicMeta(meta),
+			"error":   nil,
 		})
 	}
 }
@@ -410,13 +405,9 @@ func handleUpdateScopes(ks *KeyStore) func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		// Self-scope-escalation check: new scopes must be a subset of current scopes.
-		currentScopes := make(map[Scope]bool)
-		for _, s := range meta.Scopes {
-			currentScopes[s] = true
-		}
+		// Self-scope-escalation check: new scopes must be grantable by current scopes.
 		for _, s := range req.Scopes {
-			if !currentScopes[s] {
+			if !canGrantScope(meta, s) {
 				writeError(w, http.StatusForbidden, "SCOPE_ESCALATION", "Agents cannot add scopes beyond what the key currently has")
 				return
 			}
@@ -430,10 +421,17 @@ func handleUpdateScopes(ks *KeyStore) func(w http.ResponseWriter, r *http.Reques
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
-			"data":    ks.GetKeyByID(meta.ID),
+			"data":    publicMeta(ks.GetKeyByID(meta.ID)),
 			"error":   nil,
 		})
 	}
+}
+
+func canGrantScope(caller *KeyMeta, requested Scope) bool {
+	if requested == Scope("*") {
+		return KeyStoreHasScope(caller, Scope("*"))
+	}
+	return KeyStoreHasScope(caller, Scope("*")) || KeyStoreHasScope(caller, requested)
 }
 
 // writeError writes a JSON error response

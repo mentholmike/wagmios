@@ -185,8 +185,8 @@
 
       <!-- Footer Links -->
       <div class="mt-8 flex items-center justify-center gap-6 text-xs" :class="isDarkMode ? 'text-gray-600' : 'text-gray-400'">
-        <a href="https://wagmilabs.fun" target="_blank" class="hover:text-white transition-colors">👷 Labs</a>
-        <a href="https://github.com/mentholmike/" target="_blank" class="hover:text-white transition-colors">🐙 GitHub</a>
+        <a href="https://wagmilabs.fun" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">👷 Labs</a>
+        <a href="https://github.com/mentholmike/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">🐙 GitHub</a>
       </div>
     </main>
 
@@ -304,7 +304,7 @@ function deleteCustomLink(index: number) {
 function openPopup(url: string, title: string, width: number, height: number) {
   const left = (window.screen.width - width) / 2
   const top = (window.screen.height - height) / 2
-  window.open(url, title, `width=${width},height=${height},left=${left},top=${top}`)
+  window.open(url, title, `width=${width},height=${height},left=${left},top=${top},noopener,noreferrer`)
 }
 
 // Settings modal
