@@ -88,10 +88,13 @@ func NewKeyStore(dataDir string) (*KeyStore, error) {
 		return nil, fmt.Errorf("failed to load keys: %w", err)
 	}
 
-	// Generate a setup token if no key exists yet (first-boot)
+	// Load or generate a setup token if no key exists yet (first-boot).
+	// Do not overwrite an existing token on restart.
 	if len(ks.keys) == 0 {
-		if err := ks.generateSetupToken(); err != nil {
-			return nil, fmt.Errorf("failed to generate setup token: %w", err)
+		if err := ks.loadSetupToken(); err != nil || ks.setupToken == "" {
+			if err := ks.generateSetupToken(); err != nil {
+				return nil, fmt.Errorf("failed to generate setup token: %w", err)
+			}
 		}
 	}
 

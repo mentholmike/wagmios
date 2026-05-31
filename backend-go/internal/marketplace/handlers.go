@@ -147,6 +147,10 @@ func HandleCreateApp(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", err.Error())
 		return
 	}
+	if len(req.Volumes) > 0 {
+		writeError(w, http.StatusBadRequest, "VOLUME_OVERRIDES_UNSUPPORTED", "marketplace volume overrides are not supported yet")
+		return
+	}
 
 	manifest, err := GetManifest()
 	if err != nil {
@@ -550,10 +554,14 @@ func safePathUnder(root, path string) (string, error) {
 func dockerCommand(ctx context.Context, timeout time.Duration, args ...string) *exec.Cmd {
 	cmdCtx, cancel := context.WithTimeout(ctx, timeout)
 	cmd := exec.CommandContext(cmdCtx, "docker", args...)
-	go func() {
-		<-cmdCtx.Done()
+	cmd.WaitDelay = time.Second
+	cmd.Cancel = func() error {
 		cancel()
-	}()
+		if cmd.Process == nil {
+			return nil
+		}
+		return cmd.Process.Kill()
+	}
 	return cmd
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -36,6 +37,9 @@ const allowedVolumeRoot = "/app/data/containers"
 
 var namedVolumePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 var allowedImageExt = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".svg": true}
+var dockerNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
+var envKeyPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+var imageRefPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,254}$`)
 
 // API Response types
 type APIResponse struct {
@@ -89,20 +93,28 @@ func (s *Server) registerRoutes() {
 				r.Body = http.MaxBytesReader(rec, r.Body, 1<<20)
 			}
 
-			// Rate limiting: unauthenticated requests are keyed by client IP, authenticated by key.
 			apiKey := r.Header.Get("X-API-Key")
-			rateKey := apiKey
-			if rateKey == "" {
-				rateKey = clientIP(r)
-			}
-			if !s.rateLimiter.Allow(rateKey) {
+			clientRateKey := "ip:" + clientIP(r)
+			limitUnauthenticated := func(agent string) bool {
+				if s.rateLimiter.Allow(clientRateKey) {
+					return true
+				}
+				activity.LogAPI(r.Method, r.URL.Path, http.StatusTooManyRequests, agent, time.Since(start).Milliseconds())
 				writeJSON(rec, http.StatusTooManyRequests, nil, &APIError{Code: "RATE_LIMITED", Message: "Too many requests"})
+				return false
+			}
+
+			if isRateLimitedPublicPath(r.URL.Path) && !limitUnauthenticated("unauthenticated") {
 				return
 			}
 
 			// Skip auth only for explicitly public paths. Everything else requires setup + key.
 			if !isPublicPath(r.URL.Path) {
 				if !s.keyStore.HasKey() {
+					if !limitUnauthenticated("unauthenticated") {
+						return
+					}
+					activity.LogAPI(r.Method, r.URL.Path, http.StatusUnauthorized, "unauthenticated", time.Since(start).Milliseconds())
 					writeJSON(rec, http.StatusUnauthorized, nil, &APIError{Code: "SETUP_REQUIRED", Message: "Run first-boot setup before using this endpoint"})
 					return
 				}
@@ -115,12 +127,25 @@ func (s *Server) registerRoutes() {
 				}
 
 				if effectiveKey == "" {
+					if !limitUnauthenticated("unauthenticated") {
+						return
+					}
+					activity.LogAPI(r.Method, r.URL.Path, http.StatusUnauthorized, "unauthenticated", time.Since(start).Milliseconds())
 					writeJSON(rec, http.StatusUnauthorized, nil, &APIError{Code: "API_KEY_REQUIRED", Message: "X-API-Key header required"})
 					return
 				}
 				meta, err := s.keyStore.ValidateKey(effectiveKey)
 				if err != nil {
+					if !limitUnauthenticated("invalid-key") {
+						return
+					}
+					activity.LogAPI(r.Method, r.URL.Path, http.StatusUnauthorized, "invalid-key", time.Since(start).Milliseconds())
 					writeJSON(rec, http.StatusUnauthorized, nil, &APIError{Code: "INVALID_KEY", Message: "Invalid or expired API key"})
+					return
+				}
+				if !s.rateLimiter.Allow("key:" + meta.ID) {
+					activity.LogAPI(r.Method, r.URL.Path, http.StatusTooManyRequests, meta.KeyPrefix, time.Since(start).Milliseconds())
+					writeJSON(rec, http.StatusTooManyRequests, nil, &APIError{Code: "RATE_LIMITED", Message: "Too many requests"})
 					return
 				}
 				ctx := auth.WithKeyMeta(r.Context(), meta)
@@ -206,6 +231,15 @@ func (s *Server) logRoutes() {
 
 func isPublicPath(path string) bool {
 	return auth.IsPublicPath(path)
+}
+
+func isRateLimitedPublicPath(path string) bool {
+	switch path {
+	case "/api/auth/setup", "/api/auth/verify", "/api/auth/status":
+		return true
+	default:
+		return false
+	}
 }
 
 // ---- Response helpers ----
@@ -334,7 +368,23 @@ func validateVolumePath(hostPath string) error {
 		return fmt.Errorf("invalid Docker named volume")
 	}
 
-	absRoot, err := filepath.Abs(allowedVolumeRoot)
+	hostRoot := os.Getenv("WAGMIOS_HOST_CONTAINERS_DIR")
+	if hostRoot == "" {
+		dataRoot := os.Getenv("WAGMIOS_HOST_PATH")
+		if dataRoot == "" {
+			dataRoot = os.Getenv("WAGMIOS_DATA_DIR")
+		}
+		if dataRoot != "" && filepath.IsAbs(dataRoot) {
+			hostRoot = filepath.Join(dataRoot, "containers")
+		}
+	}
+	if hostRoot == "" {
+		return fmt.Errorf("host bind mounts require WAGMIOS_HOST_CONTAINERS_DIR or absolute WAGMIOS_HOST_PATH; use a Docker named volume instead")
+	}
+	if !filepath.IsAbs(hostRoot) {
+		return fmt.Errorf("WAGMIOS_HOST_CONTAINERS_DIR must be an absolute host path; use a Docker named volume instead")
+	}
+	absRoot, err := filepath.Abs(hostRoot)
 	if err != nil {
 		return err
 	}
@@ -347,7 +397,63 @@ func validateVolumePath(hostPath string) error {
 		return err
 	}
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) || filepath.IsAbs(rel) {
-		return fmt.Errorf("host path must be under %s", allowedVolumeRoot)
+		return fmt.Errorf("host path must be under %s", hostRoot)
+	}
+
+	// The Docker daemon resolves hostPath on the host, but this backend runs in a
+	// container where that host path may not exist. The managed host root is also
+	// mounted at allowedVolumeRoot inside this container, so perform symlink checks
+	// against the container-visible mirror using the same relative path.
+	visibleRoot := os.Getenv("WAGMIOS_CONTAINER_CONTAINERS_DIR")
+	if visibleRoot == "" {
+		visibleRoot = allowedVolumeRoot
+	}
+	if !filepath.IsAbs(visibleRoot) {
+		return fmt.Errorf("WAGMIOS_CONTAINER_CONTAINERS_DIR must be absolute")
+	}
+	visiblePath := filepath.Join(visibleRoot, rel)
+	if err := validateNoSymlinkEscape(visibleRoot, visiblePath); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateNoSymlinkEscape(absRoot, absPath string) error {
+	realRoot, err := filepath.EvalSymlinks(absRoot)
+	if err != nil {
+		return fmt.Errorf("managed container root must exist and not be a dangling symlink: %w", err)
+	}
+	current := absPath
+	missing := []string{}
+	for {
+		if _, err := os.Lstat(current); err == nil {
+			break
+		} else if os.IsNotExist(err) {
+			missing = append(missing, filepath.Base(current))
+			parent := filepath.Dir(current)
+			if parent == current {
+				return fmt.Errorf("no existing parent for host path")
+			}
+			current = parent
+			continue
+		} else {
+			return err
+		}
+	}
+	realExisting, err := filepath.EvalSymlinks(current)
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(realRoot, realExisting)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) || filepath.IsAbs(rel) {
+		return fmt.Errorf("host path escapes %s through symlink", realRoot)
+	}
+	for i := len(missing) - 1; i >= 0; i-- {
+		realExisting = filepath.Join(realExisting, missing[i])
+	}
+	rel, err = filepath.Rel(realRoot, realExisting)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) || filepath.IsAbs(rel) {
+		return fmt.Errorf("host path escapes %s", realRoot)
 	}
 	return nil
 }
@@ -545,11 +651,43 @@ func (s *Server) handleCreateContainer(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "SCOPE_REQUIRED", Message: "containers:write scope required"})
 		return
 	}
+	if err := validateDockerName("container name", config.Name); err != nil {
+		writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_NAME", Message: err.Error()})
+		return
+	}
+	if err := validateImageRef(config.Image); err != nil {
+		writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_IMAGE", Message: err.Error()})
+		return
+	}
+	for _, p := range config.Ports {
+		if err := validatePortSpec(p.Host); err != nil {
+			writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_PORT", Message: "invalid host port: " + err.Error()})
+			return
+		}
+		if err := validatePortSpec(p.Container); err != nil {
+			writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_PORT", Message: "invalid container port: " + err.Error()})
+			return
+		}
+	}
+	for _, e := range config.Env {
+		if !envKeyPattern.MatchString(e.Key) {
+			writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_ENV", Message: "invalid environment key: " + e.Key})
+			return
+		}
+		if strings.ContainsAny(e.Value, "\x00\n\r") {
+			writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_ENV", Message: "environment value contains control characters"})
+			return
+		}
+	}
 
 	// Validate volume mount paths — allow only Docker named volumes or WAGMIOS-managed host paths.
 	for _, v := range config.Volumes {
 		if err := validateVolumePath(v.Host); err != nil {
 			writeJSON(w, http.StatusForbidden, nil, &APIError{Code: "BLOCKED_VOLUME", Message: fmt.Sprintf("volume path %q is not allowed: %v", v.Host, err)})
+			return
+		}
+		if err := validateContainerPath(v.Container); err != nil {
+			writeJSON(w, http.StatusBadRequest, nil, &APIError{Code: "INVALID_VOLUME_TARGET", Message: err.Error()})
 			return
 		}
 	}
@@ -567,7 +705,7 @@ func (s *Server) handleCreateContainer(w http.ResponseWriter, r *http.Request) {
 	for _, e := range config.Env {
 		args = append(args, "-e", fmt.Sprintf("%s=%s", e.Key, e.Value))
 	}
-	args = append(args, config.Image)
+	args = append(args, "--", config.Image)
 
 	cmd := dockerCommand(r.Context(), 60*time.Second, args...)
 	output, err := cmd.CombinedOutput()
@@ -823,10 +961,19 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
-func clientIP(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		return strings.TrimSpace(strings.Split(fwd, ",")[0])
+func (r *statusRecorder) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
+}
+
+func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := r.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("underlying response writer does not support hijacking")
 	}
+	return h.Hijack()
+}
+
+func clientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
@@ -848,13 +995,56 @@ func (s *Server) requireScope(scope auth.Scope, h http.HandlerFunc) http.Handler
 	}
 }
 
+func validateDockerName(field, value string) error {
+	if !dockerNamePattern.MatchString(value) {
+		return fmt.Errorf("%s must match %s", field, dockerNamePattern.String())
+	}
+	return nil
+}
+
+func validateImageRef(value string) error {
+	if value == "" || strings.HasPrefix(value, "-") || strings.ContainsAny(value, "\x00\n\r \t") || !imageRefPattern.MatchString(value) {
+		return fmt.Errorf("invalid image reference")
+	}
+	return nil
+}
+
+func validatePortSpec(value string) error {
+	if value == "" {
+		return fmt.Errorf("port required")
+	}
+	if strings.ContainsAny(value, "\x00\n\r \t") || strings.HasPrefix(value, "-") {
+		return fmt.Errorf("invalid port %q", value)
+	}
+	parts := strings.Split(value, "/")
+	port, err := strconv.Atoi(parts[0])
+	if err != nil || port < 1 || port > 65535 {
+		return fmt.Errorf("port %q out of range", value)
+	}
+	if len(parts) > 2 || (len(parts) == 2 && parts[1] != "tcp" && parts[1] != "udp") {
+		return fmt.Errorf("invalid protocol in %q", value)
+	}
+	return nil
+}
+
+func validateContainerPath(value string) error {
+	if value == "" || !strings.HasPrefix(value, "/") || strings.ContainsAny(value, "\x00\n\r") || strings.Contains(value, "..") {
+		return fmt.Errorf("container path must be absolute and must not contain traversal/control characters")
+	}
+	return nil
+}
+
 func dockerCommand(ctx context.Context, timeout time.Duration, args ...string) *exec.Cmd {
 	cmdCtx, cancel := context.WithTimeout(ctx, timeout)
 	cmd := exec.CommandContext(cmdCtx, "docker", args...)
-	go func() {
-		<-cmdCtx.Done()
+	cmd.WaitDelay = time.Second
+	cmd.Cancel = func() error {
 		cancel()
-	}()
+		if cmd.Process == nil {
+			return nil
+		}
+		return cmd.Process.Kill()
+	}
 	return cmd
 }
 

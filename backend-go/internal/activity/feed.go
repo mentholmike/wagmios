@@ -39,13 +39,18 @@ type Event struct {
 
 type Feed struct {
 	mu          sync.RWMutex
-	subscribers map[string]*websocket.Conn
+	subscribers map[string]*Subscriber
 	events      []Event
 	maxEvents   int
 }
 
+type Subscriber struct {
+	conn    *websocket.Conn
+	writeMu sync.Mutex
+}
+
 var feed = &Feed{
-	subscribers: make(map[string]*websocket.Conn),
+	subscribers: make(map[string]*Subscriber),
 	events:      make([]Event, 0),
 	maxEvents:   500,
 }
@@ -205,21 +210,21 @@ func GetSummary(dockerTotal, dockerRunning int) MetricsSummary {
 func (f *Feed) Subscribe(id string, conn *websocket.Conn) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.subscribers[id] = conn
+	f.subscribers[id] = &Subscriber{conn: conn}
 }
 
 func (f *Feed) Unsubscribe(id string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if conn, ok := f.subscribers[id]; ok {
-		conn.Close()
+	if sub, ok := f.subscribers[id]; ok {
+		sub.conn.Close()
 		delete(f.subscribers, id)
 	}
 }
 
 func (f *Feed) Broadcast(event Event) {
 	f.mu.RLock()
-	subscribers := make(map[string]*websocket.Conn)
+	subscribers := make(map[string]*Subscriber)
 	for k, v := range f.subscribers {
 		subscribers[k] = v
 	}
@@ -231,10 +236,13 @@ func (f *Feed) Broadcast(event Event) {
 		return
 	}
 
-	for id, conn := range subscribers {
-		if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+	for id, sub := range subscribers {
+		sub.writeMu.Lock()
+		err := sub.conn.WriteMessage(websocket.TextMessage, data)
+		sub.writeMu.Unlock()
+		if err != nil {
 			f.mu.Lock()
-			conn.Close()
+			sub.conn.Close()
 			delete(f.subscribers, id)
 			f.mu.Unlock()
 		}
@@ -260,6 +268,9 @@ func (f *Feed) GetRecent(limit int) []Event {
 }
 
 func Log(event Event) {
+	if event.ID == "" {
+		event.ID = generateConnID()
+	}
 	event.Timestamp = time.Now().UTC()
 	feed.Broadcast(event)
 }

@@ -155,10 +155,13 @@ The agent knows which URL to hit for which machine  --  and the scope system ens
 
 ### Security: Network Exposure
 
-WAGMIOS binds to all interfaces (`0.0.0.0`) by default. That's fine on a trusted LAN  --  but if you're exposing it beyond your local network, follow these steps first:
+WAGMIOS binds to localhost (`127.0.0.1`) by default. That is the safest default for a Docker-socket control plane.
 
-- Local LAN only  --  No extra steps. Keep port 5179 firewalled from the internet.
+- Local-only / reverse proxy  --  No extra steps. Proxy to `localhost:5179`.
+- Trusted LAN access  --  Set `WAGMIOS_BACKEND_BIND=0.0.0.0` and keep port 5179 firewalled from the internet.
 - Internet / VPN  --  Put a reverse proxy in front and terminate TLS there. Never send API keys over plain HTTP outside your LAN.
+
+For browser access from another machine, also set `WAGMIOS_FRONTEND_BIND=0.0.0.0` or serve the frontend through your reverse proxy.
 
 **Treat your WAGMIOS API key like an SSH key.** Over a trusted LAN it's fine. Over the open internet, always use TLS.
 
@@ -339,6 +342,10 @@ Marketplace apps are stored in `~/.wagmios/containers/` on the host.
 ### Environment Variables
 
 - PORT -- Default: 5179 -- Backend port
+- WAGMIOS_BACKEND_BIND -- Default: 127.0.0.1 -- backend host bind address; use 0.0.0.0 only on a trusted LAN or behind a firewall
+- WAGMIOS_FRONTEND_BIND -- Default: 127.0.0.1 -- frontend host bind address
+- WAGMIOS_HOST_PATH -- Default in Compose: ${PWD}/data -- absolute host data path used for managed container bind mounts
+- WAGMIOS_HOST_CONTAINERS_DIR -- Default in Compose: ${WAGMIOS_HOST_PATH}/containers -- absolute host path Docker sees for API-created bind mounts. Non-Compose container deployments must set this explicitly or use Docker named volumes.
 - WAGMIOS_DATA_DIR -- Default: /app/data -- Data directory
 - VITE_API_URL -- Frontend to Backend URL (auto-set in compose)
 
